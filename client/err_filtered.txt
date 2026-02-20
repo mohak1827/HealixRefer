@@ -1,0 +1,13 @@
+[31merror during build:
+[31msrc/components/Layout/Sidebar.jsx (5:4): "Hospital" is not exported by "node_modules/lucide-react/dist/esm/lucide-react.js", imported by "src/components/Layout/Sidebar.jsx".[31m
+file: [36mC:/Users/HP/Desktop/Build and Break/client/src/components/Layout/Sidebar.jsx:5:4[31m
+    at getRollupError (file:///C:/Users/HP/Desktop/Build%20and%20Break/client/node_modules/rollup/dist/es/shared/parseAst.js:402:41)
+    at error (file:///C:/Users/HP/Desktop/Build%20and%20Break/client/node_modules/rollup/dist/es/shared/parseAst.js:398:42)
+    at Module.error (file:///C:/Users/HP/Desktop/Build%20and%20Break/client/node_modules/rollup/dist/es/shared/node-entry.js:17040:16)
+    at Module.traceVariable (file:///C:/Users/HP/Desktop/Build%20and%20Break/client/node_modules/rollup/dist/es/shared/node-entry.js:17452:29)
+    at ModuleScope.findVariable (file:///C:/Users/HP/Desktop/Build%20and%20Break/client/node_modules/rollup/dist/es/shared/node-entry.js:15070:39)
+    at ReturnValueScope.findVariable (file:///C:/Users/HP/Desktop/Build%20and%20Break/client/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+    at FunctionBodyScope.findVariable (file:///C:/Users/HP/Desktop/Build%20and%20Break/client/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+    at Identifier.bind (file:///C:/Users/HP/Desktop/Build%20and%20Break/client/node_modules/rollup/dist/es/shared/node-entry.js:5447:40)
+    at Property.bind (file:///C:/Users/HP/Desktop/Build%20and%20Break/client/node_modules/rollup/dist/es/shared/node-entry.js:2829:23)
+    at ObjectExpression.bind (file:///C:/Users/HP/Desktop/Build%20and%20Break/client/node_modules/rollup/dist/es/shared/node-entry.js:2825:28)[39m

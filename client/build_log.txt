@@ -1,0 +1,126 @@
+﻿[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 2392 modules transformed.
+node.exe : 
+[31mx[39m Build 
+failed in 9.18s
+At line:1 char:1
++ & "C:\Program Files
+\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: ([31mx   
+ [39m Build faile    
+d in 9.18s:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+[31merror during 
+build:
+[31msrc/components/L
+ayout/Sidebar.jsx 
+(5:4): "Hospital" is 
+not exported by "node
+_modules/lucide-react
+/dist/esm/lucide-reac
+t.js", imported by "s
+rc/components/Layout/
+Sidebar.jsx".[31m
+file: [36mC:/Users/H
+P/Desktop/Build and B
+reak/client/src/compo
+nents/Layout/Sidebar.
+jsx:5:4[31m
+[33m
+3: import {
+4:     
+LayoutDashboard,
+5:     Hospital,
+       ^
+6:     BarChart3,
+7:     Map as 
+MapIcon,
+[31m
+    at 
+getRollupError (file:
+///C:/Users/HP/Deskto
+p/Build%20and%20Break
+/client/node_modules/
+rollup/dist/es/shared
+/parseAst.js:402:41)
+    at error (file://
+/C:/Users/HP/Desktop/
+Build%20and%20Break/c
+lient/node_modules/ro
+llup/dist/es/shared/p
+arseAst.js:398:42)
+    at Module.error (
+file:///C:/Users/HP/D
+esktop/Build%20and%20
+Break/client/node_mod
+ules/rollup/dist/es/s
+hared/node-entry.js:1
+7040:16)
+    at 
+Module.traceVariable 
+(file:///C:/Users/HP/
+Desktop/Build%20and%2
+0Break/client/node_mo
+dules/rollup/dist/es/
+shared/node-entry.js:
+17452:29)
+    at ModuleScope.fi
+ndVariable (file:///C
+:/Users/HP/Desktop/Bu
+ild%20and%20Break/cli
+ent/node_modules/roll
+up/dist/es/shared/nod
+e-entry.js:15070:39)
+    at ReturnValueSco
+pe.findVariable (file
+:///C:/Users/HP/Deskt
+op/Build%20and%20Brea
+k/client/node_modules
+/rollup/dist/es/share
+d/node-entry.js:5673:
+38)
+    at FunctionBodySc
+ope.findVariable (fil
+e:///C:/Users/HP/Desk
+top/Build%20and%20Bre
+ak/client/node_module
+s/rollup/dist/es/shar
+ed/node-entry.js:5673
+:38)
+    at 
+Identifier.bind (file
+:///C:/Users/HP/Deskt
+op/Build%20and%20Brea
+k/client/node_modules
+/rollup/dist/es/share
+d/node-entry.js:5447:
+40)
+    at Property.bind 
+(file:///C:/Users/HP/
+Desktop/Build%20and%2
+0Break/client/node_mo
+dules/rollup/dist/es/
+shared/node-entry.js:
+2829:23)
+    at ObjectExpressi
+on.bind (file:///C:/U
+sers/HP/Desktop/Build
+%20and%20Break/client
+/node_modules/rollup/
+dist/es/shared/node-e
+ntry.js:2825:28)[39m
