@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediRoute AI | Intelligent Rural Healthcare Referral Platform</title>
+    <meta name="description"
+        content="AI-powered healthcare referral system that saves lives through intelligent hospital matching, severity scoring, and cross-district optimization.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e1b4b;
+            --primary-light: #312e81;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --coral: #f97066;
+            --coral-light: #fda4af;
+            --teal: #14b8a6;
+            --teal-light: #5eead4;
+            --bg: #fafbff;
+            --white: #ffffff;
+            --text: #1e1b4b;
+            --text-light: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --card-shadow: 0 4px 40px rgba(30, 27, 75, 0.06);
+            --hover-shadow: 0 12px 48px rgba(99, 102, 241, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            line-height: 1.7;
+        }
+
+        /* Utility */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--accent);
+            background: rgba(99, 102, 241, 0.08);
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 50px;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .section-desc {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            max-width: 600px;
+            line-height: 1.8;
+        }
+
+        /* Nav */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        nav .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 72px;
+        }
+
+        nav .logo {
+            font-weight: 900;
+            font-size: 1.4rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        nav .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 900;
+            font-size: 1rem;
+        }
+
+        nav .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        nav .nav-links a {
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        nav .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .btn-outline {
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            padding: 10px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-outline:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Hero */
+        .hero {
+            padding: 160px 0 100px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero h1 {
+            font-size: 3.6rem;
+            font-weight: 900;
+            line-height: 1.1;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 span {
+            color: var(--accent);
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            line-height: 1.8;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 2.5rem;
+            margin-top: 3rem;
+        }
+
+        .hero-stats .stat {
+            text-align: left;
+        }
+
+        .hero-stats .stat-num {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--accent);
+        }
+
+        .hero-stats .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .hero-visual {
+            position: relative;
+        }
+
+        .hero-card {
+            background: white;
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+        }
+
+        .hero-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-card-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .hero-card-bar {
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .coral-blob {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--coral-light);
+            border-radius: 60% 40% 70% 30% / 50% 60% 40% 50%;
+            opacity: 0.25;
+            z-index: -1;
+            top: -50px;
+            right: -50px;
+            animation: blob 8s infinite;
+        }
+
+        .accent-blob {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--accent-light);
+            border-radius: 40% 60% 30% 70% / 60% 40% 50% 50%;
+            opacity: 0.15;
+            z-index: -1;
+            bottom: -30px;
+            left: -30px;
+            animation: blob 10s infinite reverse;
+        }
+
+        @keyframes blob {
+
+            0%,
+            100% {
+                border-radius: 60% 40% 70% 30%/50% 60% 40% 50%
+            }
+
+            50% {
+                border-radius: 30% 60% 40% 70%/60% 30% 50% 40%
+            }
+        }
+
+        /* Feature Sections */
+        .features-section {
+            padding: 100px 0;
+        }
+
+        .features-section:nth-child(even) {
+            background: white;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--hover-shadow);
+            border-color: var(--accent-light);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            line-height: 1.7;
+        }
+
+        .feature-tag {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            padding: 4px 12px;
+            border-radius: 50px;
+            margin-top: 1rem;
+        }
+
+        .icon-coral {
+            background: rgba(249, 112, 102, 0.1);
+            color: var(--coral);
+        }
+
+        .icon-accent {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent);
+        }
+
+        .icon-teal {
+            background: rgba(20, 184, 166, 0.1);
+            color: var(--teal);
+        }
+
+        .icon-primary {
+            background: rgba(30, 27, 75, 0.08);
+            color: var(--primary);
+        }
+
+        .tag-coral {
+            background: rgba(249, 112, 102, 0.1);
+            color: var(--coral);
+        }
+
+        .tag-accent {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent);
+        }
+
+        .tag-teal {
+            background: rgba(20, 184, 166, 0.1);
+            color: var(--teal);
+        }
+
+        .tag-primary {
+            background: rgba(30, 27, 75, 0.08);
+            color: var(--primary);
+        }
+
+        /* Showcase (alternating left-right) */
+        .showcase {
+            padding: 80px 0;
+        }
+
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .showcase-grid.reverse {
+            direction: rtl;
+        }
+
+        .showcase-grid.reverse>* {
+            direction: ltr;
+        }
+
+        .showcase-visual {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .showcase-visual .mock-bar {
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .showcase-visual .mock-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 100px;
+            padding: 1rem 0;
+        }
+
+        .showcase-visual .mock-chart .bar {
+            flex: 1;
+            border-radius: 4px 4px 0 0;
+            transition: height 0.6s;
+        }
+
+        .mini-card {
+            background: var(--bg);
+            border-radius: 16px;
+            padding: 1.2rem;
+            border: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+
+        .mini-card-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mini-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* How it works */
+        .how-it-works {
+            padding: 100px 0;
+            background: var(--primary);
+            color: white;
+        }
+
+        .how-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .how-step {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .how-num {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--accent-light);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .how-step h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: white;
+        }
+
+        .how-step p {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.7;
+        }
+
+        /* Stats Banner */
+        .stats-banner {
+            padding: 80px 0;
+            background: linear-gradient(135deg, var(--accent), var(--primary-light));
+            color: white;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stats-row .stat-big {
+            font-size: 3rem;
+            font-weight: 900;
+        }
+
+        .stats-row .stat-text {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            opacity: 0.8;
+            font-weight: 600;
+        }
+
+        /* CTA */
+        .cta-section {
+            padding: 100px 0;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            color: var(--text-light);
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--primary);
+            padding: 60px 0 30px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-grid h4 {
+            color: white;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .footer-grid a {
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            transition: color 0.2s;
+        }
+
+        .footer-grid a:hover {
+            color: var(--accent-light);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        /* Animations */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .delay-1 {
+            transition-delay: 0.1s;
+        }
+
+        .delay-2 {
+            transition-delay: 0.2s;
+        }
+
+        .delay-3 {
+            transition-delay: 0.3s;
+        }
+
+        .delay-4 {
+            transition-delay: 0.4s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+
+            .hero-grid,
+            .showcase-grid,
+            .features-grid,
+            .how-grid,
+            .footer-grid,
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 2.4rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .hero-stats {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav .nav-links {
+                display: none;
+            }
+
+            .showcase-grid.reverse {
+                direction: ltr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-inner">
+            <a href="#" class="logo">
+                <div class="logo-icon">M</div>
+                MediRoute AI
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how">How It Works</a>
+                <a href="#ai-tools">AI Tools</a>
+                <a href="#impact">Impact</a>
+                <a href="client/index.html" class="btn-primary">Launch Dashboard →</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="fade-up">
+                    <span class="section-label">🏥 AI-Powered Healthcare</span>
+                    <h1>Our mission is to make <span>healthcare accessible</span> for rural India</h1>
+                    <p>MediRoute AI uses advanced artificial intelligence to instantly match patients with the best
+                        available hospital — considering severity, distance, bed capacity, and specialist availability
+                        in real time.</p>
+                    <div class="hero-btns">
+                        <a href="client/index.html" class="btn-primary">Open Dashboard</a>
+                        <a href="#features" class="btn-outline">Explore Features</a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <div class="stat-num">1,247+</div>
+                            <div class="stat-label">Lives Saved</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-num">18 min</div>
+                            <div class="stat-label">Avg Time Saved</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-num">94.2%</div>
+                            <div class="stat-label">AI Accuracy</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-visual fade-up delay-2">
+                    <div class="coral-blob"></div>
+                    <div class="accent-blob"></div>
+                    <div class="hero-card">
+                        <div class="hero-card-header">
+                            <div class="hero-card-dot" style="background:var(--coral)"></div>
+                            <div class="hero-card-dot" style="background:var(--accent)"></div>
+                            <div class="hero-card-dot" style="background:var(--teal)"></div>
+                            <span style="font-size:0.75rem;font-weight:700;color:var(--text-muted);margin-left:auto">AI
+                                TRIAGE ENGINE</span>
+                        </div>
+                        <div class="mini-card">
+                            <div class="mini-card-row">
+                                <span style="font-weight:700;font-size:0.85rem">🚨 Patient: Ramesh K.</span>
+                                <span
+                                    style="font-size:0.7rem;font-weight:700;color:var(--coral);background:rgba(249,112,102,0.1);padding:3px 10px;border-radius:50px">CRITICAL</span>
+                            </div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px">SpO2: 85% • HR: 132 •
+                                BP: 82/50</div>
+                        </div>
+                        <div class="mini-card">
+                            <div class="mini-card-row">
+                                <span style="font-weight:700;font-size:0.85rem">🏥 City General Hospital</span>
+                                <span
+                                    style="font-size:0.7rem;font-weight:700;color:var(--teal);background:rgba(20,184,166,0.1);padding:3px 10px;border-radius:50px">94%
+                                    MATCH</span>
+                            </div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px">12 km • ICU: 8 beds •
+                                ETA: 18m</div>
+                        </div>
+                        <div style="margin-top:1.5rem">
+                            <div
+                                style="display:flex;justify-content:space-between;font-size:0.7rem;font-weight:700;color:var(--text-muted);margin-bottom:6px">
+                                <span>AI CONFIDENCE</span><span style="color:var(--accent)">94%</span>
+                            </div>
+                            <div style="background:var(--border);height:8px;border-radius:4px">
+                                <div
+                                    style="width:94%;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--teal))">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Features Grid -->
+    <section class="features-section" id="features">
+        <div class="container">
+            <div class="fade-up" style="text-align:center;margin-bottom:1rem">
+                <span class="section-label">Core Capabilities</span>
+            </div>
+            <h2 class="section-title fade-up" style="text-align:center">Intelligent features that <br>save lives every
+                day</h2>
+            <p class="section-desc fade-up" style="text-align:center;margin:0 auto 3rem">Our AI platform includes 11
+                specialized tools, each designed to optimize a critical aspect of rural healthcare referral.</p>
+
+            <div class="features-grid">
+                <div class="feature-card fade-up delay-1">
+                    <div class="feature-icon icon-coral">🚨</div>
+                    <h3>AI Emergency Severity Scoring</h3>
+                    <p>Instantly calculates how critical a patient's condition is using SpO2, heart rate, blood
+                        pressure, temperature, and GCS score.</p>
+                    <span class="feature-tag tag-coral">Real-time Triage</span>
+                </div>
+                <div class="feature-card fade-up delay-2">
+                    <div class="feature-icon icon-accent">🧠</div>
+                    <h3>Self-Learning Referral Intelligence</h3>
+                    <p>Improves automatically by learning from past referral outcomes. Training cycles refine scoring
+                        weights every 24 hours.</p>
+                    <span class="feature-tag tag-accent">Machine Learning</span>
+                </div>
+                <div class="feature-card fade-up delay-3">
+                    <div class="feature-icon icon-teal">📊</div>
+                    <h3>Dynamic Infrastructure Stress Index</h3>
+                    <p>Shows which hospitals are under high pressure in real time — tracking beds, staff ratios, and
+                        ambulance availability.</p>
+                    <span class="feature-tag tag-teal">Live Monitoring</span>
+                </div>
+                <div class="feature-card fade-up delay-1">
+                    <div class="feature-icon icon-primary">🌪</div>
+                    <h3>Disaster & Surge Mode</h3>
+                    <p>Activates special referral logic during pandemics, mass casualty events, or natural disasters.
+                    </p>
+                    <span class="feature-tag tag-primary">Emergency Protocol</span>
+                </div>
+                <div class="feature-card fade-up delay-2">
+                    <div class="feature-icon icon-accent">📝</div>
+                    <h3>Digital Referral Audit Trail</h3>
+                    <p>Tracks every decision step for accountability and transparency. HIPAA-compliant logging with
+                        override tracking.</p>
+                    <span class="feature-tag tag-accent">Compliance</span>
+                </div>
+                <div class="feature-card fade-up delay-3">
+                    <div class="feature-icon icon-coral">🔮</div>
+                    <h3>Predictive Outbreak Detection</h3>
+                    <p>Identifies unusual case patterns early and alerts authorities. 5-week trend analysis with anomaly
+                        threshold detection.</p>
+                    <span class="feature-tag tag-coral">Predictive AI</span>
+                </div>
+                <div class="feature-card fade-up delay-1">
+                    <div class="feature-icon icon-teal">🌍</div>
+                    <h3>Cross-District Referral Optimization</h3>
+                    <p>Finds the best hospital even beyond local district boundaries. Multi-region scan with ETA and
+                        specialty matching.</p>
+                    <span class="feature-tag tag-teal">Multi-Region</span>
+                </div>
+                <div class="feature-card fade-up delay-2">
+                    <div class="feature-icon icon-primary">📉</div>
+                    <h3>AI Confidence Score</h3>
+                    <p>Displays how confident the system is in its recommendation with explainable factor breakdown for
+                        each referral.</p>
+                    <span class="feature-tag tag-primary">Explainable AI</span>
+                </div>
+                <div class="feature-card fade-up delay-3">
+                    <div class="feature-icon icon-accent">🔁</div>
+                    <h3>Smart Feedback Loop</h3>
+                    <p>Collects doctor feedback to continuously refine decisions. Star ratings and clinical outcomes
+                        drive model recalibration.</p>
+                    <span class="feature-tag tag-accent">Continuous Learning</span>
+                </div>
+                <div class="feature-card fade-up delay-1">
+                    <div class="feature-icon icon-coral">📊</div>
+                    <h3>Impact Measurement Dashboard</h3>
+                    <p>Shows lives saved, time reduced, and system efficiency improvements with 6-month trend analytics.
+                    </p>
+                    <span class="feature-tag tag-coral">Analytics</span>
+                </div>
+                <div class="feature-card fade-up delay-2">
+                    <div class="feature-icon icon-teal">🧪</div>
+                    <h3>Nearby Lab & Test Recommendation</h3>
+                    <p>Suggests nearby diagnostic labs with price comparison, real-time availability, and instant
+                        booking options.</p>
+                    <span class="feature-tag tag-teal">Diagnostics</span>
+                </div>
+                <div class="feature-card fade-up delay-3">
+                    <div class="feature-icon icon-primary">🗺️</div>
+                    <h3>Interactive Regional Map</h3>
+                    <p>Visual hospital routing with live patient tracking, ambulance positions, and neural path
+                        optimization overlay.</p>
+                    <span class="feature-tag tag-primary">Geospatial</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works" id="how">
+        <div class="container">
+            <div style="text-align:center" class="fade-up">
+                <span class="section-label" style="color:var(--accent-light);background:rgba(129,140,248,0.15)">How It
+                    Works</span>
+                <h2 style="font-size:2.5rem;font-weight:800;color:white;margin:1rem 0;line-height:1.2">From emergency to
+                    admission<br>in under 20 minutes</h2>
+            </div>
+            <div class="how-grid">
+                <div class="how-step fade-up delay-1">
+                    <span class="how-num">01</span>
+                    <h3>Enter Patient Vitals</h3>
+                    <p>Doctor inputs SpO2, heart rate, blood pressure, temperature, and GCS at the rural health center.
+                    </p>
+                </div>
+                <div class="how-step fade-up delay-2">
+                    <span class="how-num">02</span>
+                    <h3>AI Severity Scoring</h3>
+                    <p>Neural triage engine instantly classifies the case as Stable, Moderate, or Critical with
+                        confidence scoring.</p>
+                </div>
+                <div class="how-step fade-up delay-3">
+                    <span class="how-num">03</span>
+                    <h3>Hospital Matching</h3>
+                    <p>AI evaluates all hospitals across districts — factoring beds, specialists, distance, stress
+                        levels, and ETA.</p>
+                </div>
+                <div class="how-step fade-up delay-4">
+                    <span class="how-num">04</span>
+                    <h3>Transport & Track</h3>
+                    <p>Ambulance dispatched with real-time tracking. Receiving hospital pre-alerted with patient data.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Showcase: Severity Scoring -->
+    <section class="showcase" id="ai-tools">
+        <div class="container">
+            <div class="showcase-grid">
+                <div class="fade-up">
+                    <span class="section-label">🚨 AI Triage</span>
+                    <h2 class="section-title">Emergency severity<br>in seconds, not minutes</h2>
+                    <p class="section-desc">Our multi-parameter AI analyzes 5 vital signs simultaneously and generates a
+                        clinical severity score. Automatic protocol recommendations based on severity level.</p>
+                    <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap">
+                        <span
+                            style="background:rgba(249,112,102,0.1);color:var(--coral);padding:8px 16px;border-radius:50px;font-size:0.8rem;font-weight:700">SpO2
+                            Analysis</span>
+                        <span
+                            style="background:rgba(99,102,241,0.1);color:var(--accent);padding:8px 16px;border-radius:50px;font-size:0.8rem;font-weight:700">Heart
+                            Rate</span>
+                        <span
+                            style="background:rgba(20,184,166,0.1);color:var(--teal);padding:8px 16px;border-radius:50px;font-size:0.8rem;font-weight:700">Blood
+                            Pressure</span>
+                        <span
+                            style="background:rgba(30,27,75,0.08);color:var(--primary);padding:8px 16px;border-radius:50px;font-size:0.8rem;font-weight:700">GCS
+                            Score</span>
+                    </div>
+                </div>
+                <div class="showcase-visual fade-up delay-2">
+                    <div style="text-align:center;padding:1rem">
+                        <div
+                            style="width:120px;height:120px;border-radius:50%;background:rgba(249,112,102,0.1);border:4px solid var(--coral);display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem">
+                            <span style="font-size:2.5rem;font-weight:900;color:var(--coral)">78</span>
+                        </div>
+                        <div
+                            style="font-size:1.2rem;font-weight:800;color:var(--coral);text-transform:uppercase;letter-spacing:0.15em">
+                            Critical</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">Immediate ICU transfer
+                            recommended</div>
+                    </div>
+                    <div class="mini-card">
+                        <div class="mini-card-row"><span style="font-size:0.8rem;font-weight:600">Critical hypoxemia
+                                detected</span><span class="mini-dot" style="background:var(--coral)"></span></div>
+                    </div>
+                    <div class="mini-card">
+                        <div class="mini-card-row"><span style="font-size:0.8rem;font-weight:600">Dangerous heart
+                                rate</span><span class="mini-dot" style="background:var(--coral)"></span></div>
+                    </div>
+                    <div class="mini-card">
+                        <div class="mini-card-row"><span style="font-size:0.8rem;font-weight:600">Low blood
+                                pressure</span><span class="mini-dot" style="background:var(--accent)"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Showcase: Stress Index -->
+    <section class="showcase" style="background:white">
+        <div class="container">
+            <div class="showcase-grid reverse">
+                <div class="fade-up">
+                    <span class="section-label">📊 Live Monitoring</span>
+                    <h2 class="section-title">Real-time hospital<br>stress monitoring</h2>
+                    <p class="section-desc">Every 4 seconds, MediRoute AI updates the stress index of every connected
+                        hospital — tracking ICU beds, staffing ratios, wait times, and ambulance availability.</p>
+                </div>
+                <div class="showcase-visual fade-up delay-2">
+                    <div class="mini-card" style="border-left:3px solid var(--teal)">
+                        <div class="mini-card-row">
+                            <span style="font-weight:700;font-size:0.85rem">City General Hospital</span>
+                            <span
+                                style="font-size:0.7rem;font-weight:700;color:var(--teal);background:rgba(20,184,166,0.1);padding:3px 10px;border-radius:50px">32%</span>
+                        </div>
+                        <div class="hero-card-bar" style="background:var(--border);margin-top:8px">
+                            <div style="width:32%;height:8px;border-radius:4px;background:var(--teal)"></div>
+                        </div>
+                    </div>
+                    <div class="mini-card" style="border-left:3px solid var(--accent)">
+                        <div class="mini-card-row">
+                            <span style="font-weight:700;font-size:0.85rem">District Medical Center</span>
+                            <span
+                                style="font-size:0.7rem;font-weight:700;color:var(--accent);background:rgba(99,102,241,0.1);padding:3px 10px;border-radius:50px">58%</span>
+                        </div>
+                        <div class="hero-card-bar" style="background:var(--border);margin-top:8px">
+                            <div style="width:58%;height:8px;border-radius:4px;background:var(--accent)"></div>
+                        </div>
+                    </div>
+                    <div class="mini-card" style="border-left:3px solid var(--coral)">
+                        <div class="mini-card-row">
+                            <span style="font-weight:700;font-size:0.85rem">Rural Health Institute</span>
+                            <span
+                                style="font-size:0.7rem;font-weight:700;color:var(--coral);background:rgba(249,112,102,0.1);padding:3px 10px;border-radius:50px">85%</span>
+                        </div>
+                        <div class="hero-card-bar" style="background:var(--border);margin-top:8px">
+                            <div style="width:85%;height:8px;border-radius:4px;background:var(--coral)"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Showcase: Outbreak Detection -->
+    <section class="showcase">
+        <div class="container">
+            <div class="showcase-grid">
+                <div class="fade-up">
+                    <span class="section-label">🔮 Predictive AI</span>
+                    <h2 class="section-title">Detect outbreaks<br>before they spread</h2>
+                    <p class="section-desc">AI pattern recognition identifies unusual case clusters and geographic
+                        concentrations. Alerts are generated when cases exceed the 2σ anomaly threshold.</p>
+                </div>
+                <div class="showcase-visual fade-up delay-2">
+                    <div
+                        style="font-size:0.7rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.1em">
+                        5-Week Trend Analysis</div>
+                    <div class="mock-chart">
+                        <div class="bar" style="height:15%;background:var(--accent-light)"></div>
+                        <div class="bar" style="height:25%;background:var(--accent-light)"></div>
+                        <div class="bar" style="height:35%;background:var(--accent)"></div>
+                        <div class="bar" style="height:55%;background:var(--accent)"></div>
+                        <div class="bar" style="height:80%;background:var(--coral)"></div>
+                    </div>
+                    <div
+                        style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-muted);font-weight:600;padding:0 0.5rem">
+                        <span>W1</span><span>W2</span><span>W3</span><span>W4</span><span>W5</span></div>
+                    <div class="mini-card" style="margin-top:1rem;border-left:3px solid var(--coral)">
+                        <div style="font-size:0.8rem;font-weight:700;color:var(--coral)">⚠️ Respiratory illness cluster
+                            — Khargone</div>
+                        <div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px">128 cases • +32% trend •
+                            Confidence: 92%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Banner -->
+    <section class="stats-banner" id="impact">
+        <div class="container">
+            <div class="stats-row">
+                <div class="fade-up delay-1">
+                    <div class="stat-big">1,247+</div>
+                    <div class="stat-text">Lives Saved</div>
+                </div>
+                <div class="fade-up delay-2">
+                    <div class="stat-big">12,847</div>
+                    <div class="stat-text">Referrals Processed</div>
+                </div>
+                <div class="fade-up delay-3">
+                    <div class="stat-big">18 min</div>
+                    <div class="stat-text">Avg Time Saved</div>
+                </div>
+                <div class="fade-up delay-4">
+                    <div class="stat-big">99.97%</div>
+                    <div class="stat-text">System Uptime</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="container fade-up">
+            <span class="section-label">Get Started</span>
+            <h2>Ready to transform your healthcare referrals?</h2>
+            <p>Join hundreds of rural health centers already using MediRoute AI to save lives and reduce transport
+                times.</p>
+            <div style="display:flex;gap:1rem;justify-content:center">
+                <a href="client/index.html" class="btn-primary" style="padding:16px 40px;font-size:1rem">Launch
+                    Dashboard →</a>
+                <a href="#features" class="btn-outline" style="padding:14px 40px">View All Features</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <div
+                        style="font-weight:900;font-size:1.3rem;color:white;margin-bottom:1rem;display:flex;align-items:center;gap:10px">
+                        <div
+                            style="width:32px;height:32px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:0.85rem">
+                            M</div>
+                        MediRoute AI
+                    </div>
+                    <p style="font-size:0.85rem;line-height:1.8;max-width:300px">AI-powered healthcare referral system
+                        optimizing patient outcomes through intelligent hospital matching and predictive analytics.</p>
+                </div>
+                <div>
+                    <h4>Platform</h4>
+                    <a href="#features">Features</a>
+                    <a href="#how">How It Works</a>
+                    <a href="#ai-tools">AI Tools</a>
+                    <a href="#impact">Impact</a>
+                </div>
+                <div>
+                    <h4>AI Tools</h4>
+                    <a href="client/index.html">Severity Scoring</a>
+                    <a href="client/index.html">Outbreak Detection</a>
+                    <a href="client/index.html">Stress Index</a>
+                    <a href="client/index.html">Nearby Labs</a>
+                </div>
+                <div>
+                    <h4>Resources</h4>
+                    <a href="#">Documentation</a>
+                    <a href="#">API Reference</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">HIPAA Compliance</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 MediRoute AI. All rights reserved.</span>
+                <span>Built with ❤️ for Rural Healthcare</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Scroll animation observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    </script>
+</body>
+
+</html>
