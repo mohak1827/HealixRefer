@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Stethoscope, User, FileText, AlertTriangle, CheckCircle2, Clock,
     Send, Building2, MapPin, Activity, Heart, TrendingUp, Shield,
-    Upload, Zap, ArrowRight, Info, BarChart3, Bed, CircleDot
+    Upload, Zap, ArrowRight, Info, BarChart3, Bed, CircleDot,
+    Navigation, Filter, Star, Users as UsersIcon
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
+import {
+    suggestHospitals, classifySeverity, createReferral,
+    getReferrals, LOCATION_LIST
+} from './referralEngine';
 
 const SPECIALISTS = ['General', 'Cardiologist', 'Neurologist', 'Orthopedic', 'Pulmonologist', 'General Surgeon'];
 
@@ -19,78 +23,74 @@ const DoctorDashboard = ({ activeView }) => {
     const [form, setForm] = useState({
         patientName: '', patientAge: '', patientVillage: '', patientContact: '',
         symptoms: '', urgency: 'Normal', specialistNeeded: '', needsICU: false,
-        notes: '', medicalReport: ''
+        notes: '', medicalReport: '', patientLocation: ''
     });
     const [aiResult, setAiResult] = useState(null);
     const [selectedHospital, setSelectedHospital] = useState(null);
-    const [step, setStep] = useState(1); // 1=form, 2=ai-review, 3=confirmed
+    const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [reservationResult, setReservationResult] = useState(null);
     const [severityResult, setSeverityResult] = useState(null);
+    const [distFilter, setDistFilter] = useState('all'); // 'all' | 'near' | 'mid'
 
     useEffect(() => { setView(activeView === 'history' ? 'history' : 'create'); }, [activeView]);
-    useEffect(() => { fetchReferrals(); }, []);
+    useEffect(() => { setReferrals(getReferrals()); }, []);
 
-    const fetchReferrals = async () => {
-        try { const res = await axios.get('/api/referrals'); setReferrals(res.data); } catch (err) { console.error(err); }
-    };
-
-    const handleGenerateAI = async () => {
+    const handleGenerateAI = () => {
         if (!form.patientName || !form.symptoms) {
             notify('Please fill patient name and symptoms', 'error');
             return;
         }
-        setLoading(true);
-        try {
-            const [suggestRes, severityRes] = await Promise.all([
-                axios.post('/api/ai/suggest-hospital', {
-                    symptoms: form.symptoms, urgency: form.urgency,
-                    specialistNeeded: form.specialistNeeded, needsICU: form.needsICU
-                }),
-                axios.post('/api/ai/classify-severity', {
-                    symptoms: form.symptoms, urgency: form.urgency,
-                    needsICU: form.needsICU, specialistNeeded: form.specialistNeeded
-                })
-            ]);
-            setAiResult(suggestRes.data);
-            setSeverityResult(severityRes.data);
-            if (suggestRes.data.bestMatch) setSelectedHospital(suggestRes.data.bestMatch);
-            setStep(2);
-        } catch (err) {
-            const errorMsg = err.response?.data?.message || 'AI engine is currently synchronized but unreachable. Switching to Simulation Mode...';
-            notify(errorMsg, 'error');
-            setStep(1);
+        if (!form.patientLocation) {
+            notify('Please select patient location for accurate recommendations', 'error');
+            return;
         }
-        setLoading(false);
+        setLoading(true);
+
+        // Small timeout to show loading animation
+        setTimeout(() => {
+            const result = suggestHospitals({
+                symptoms: form.symptoms,
+                urgency: form.urgency,
+                specialistNeeded: form.specialistNeeded,
+                needsICU: form.needsICU,
+                patientLocation: form.patientLocation,
+            });
+            const severity = classifySeverity(form.symptoms, form.urgency, form.needsICU, form.specialistNeeded);
+
+            setAiResult(result);
+            setSeverityResult(severity);
+            if (result.bestMatch) setSelectedHospital(result.bestMatch);
+            setStep(2);
+            setLoading(false);
+        }, 800);
     };
 
-    const handleConfirmReferral = async () => {
+    const handleConfirmReferral = () => {
         if (!selectedHospital) return;
         setLoading(true);
-        try {
-            const res = await axios.post('/api/referrals', {
-                ...form,
-                hospitalId: selectedHospital.id,
-                aiReason: selectedHospital.reasonString,
-                needsICU: form.needsICU || form.urgency === 'Emergency'
+
+        setTimeout(() => {
+            const res = createReferral({
+                form, hospital: selectedHospital, severity: severityResult,
+                doctorName: user?.name || 'Doctor'
             });
-            setReservationResult(res.data);
+            setReservationResult(res);
             setStep(3);
             notify('Referral confirmed! Resources auto-reserved.', 'success');
-            fetchReferrals();
-        } catch (err) {
-            notify('Failed to create referral', 'error');
-        }
-        setLoading(false);
+            setReferrals(getReferrals());
+            setLoading(false);
+        }, 600);
     };
 
     const resetForm = () => {
-        setForm({ patientName: '', patientAge: '', patientVillage: '', patientContact: '', symptoms: '', urgency: 'Normal', specialistNeeded: '', needsICU: false, notes: '', medicalReport: '' });
+        setForm({ patientName: '', patientAge: '', patientVillage: '', patientContact: '', symptoms: '', urgency: 'Normal', specialistNeeded: '', needsICU: false, notes: '', medicalReport: '', patientLocation: '' });
         setAiResult(null);
         setSelectedHospital(null);
         setStep(1);
         setReservationResult(null);
         setSeverityResult(null);
+        setDistFilter('all');
     };
 
     const getRiskColor = (level) => {
@@ -98,6 +98,13 @@ const DoctorDashboard = ({ activeView }) => {
         if (level === 'Medium') return { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', bar: 'bg-amber-500' };
         return { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', bar: 'bg-red-500' };
     };
+
+    // Filter suggestions by distance
+    const filteredSuggestions = (aiResult?.suggestions || []).filter(h => {
+        if (distFilter === 'near') return h.distance <= 20;
+        if (distFilter === 'mid') return h.distance <= 50;
+        return true;
+    });
 
     return (
         <div>
@@ -108,20 +115,10 @@ const DoctorDashboard = ({ activeView }) => {
                         <Stethoscope className="w-6 h-6 text-medical-blue" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-medical-dark">Doctor Dashboard</h1>
+                        <h1 className="text-2xl font-bold text-medical-dark">{view === 'history' ? 'Referral History' : 'Doctor Dashboard'}</h1>
                         <p className="text-sm text-gray-400 font-medium">{user?.phcName || 'Primary Health Center'} • {user?.name}</p>
                     </div>
                 </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex gap-3 mb-8">
-                {[{ id: 'create', label: 'New Referral', icon: Send }, { id: 'history', label: 'Referral History', icon: FileText }].map(t => (
-                    <button key={t.id} onClick={() => { setView(t.id); if (t.id === 'create') resetForm(); }}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-medical text-sm font-bold transition-all ${view === t.id ? 'bg-medical-blue text-white shadow-soft' : 'bg-white text-gray-400 hover:text-medical-blue border border-medical-gray'}`}>
-                        <t.icon className="w-4 h-4" /> {t.label}
-                    </button>
-                ))}
             </div>
 
             <AnimatePresence mode="wait">
@@ -168,6 +165,26 @@ const DoctorDashboard = ({ activeView }) => {
                                             <input placeholder="Enter phone" value={form.patientContact} onChange={e => setForm({ ...form, patientContact: e.target.value })}
                                                 className="w-full px-4 py-3 rounded-medical border border-medical-gray text-sm font-medium focus:outline-none focus:border-medical-blue focus:ring-4 focus:ring-medical-blue/5 transition-all" />
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* ★ Patient Location (GPS/Area selector) */}
+                                <div className="medical-card p-8 border-2 border-medical-blue/20">
+                                    <h3 className="text-md font-bold text-medical-dark mb-4 flex items-center gap-2">
+                                        <Navigation className="w-5 h-5 text-medical-blue" /> Patient Location <span className="text-urgent-red">*</span>
+                                        <span className="ml-auto text-[10px] font-bold text-medical-blue bg-blue-50 px-3 py-1 rounded-full">Drives hospital recommendations</span>
+                                    </h3>
+                                    <p className="text-xs text-gray-400 mb-4">Nearest hospitals will be computed from this location using real coordinates.</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                        {LOCATION_LIST.map(loc => (
+                                            <button key={loc} onClick={() => setForm({ ...form, patientLocation: loc })}
+                                                className={`px-4 py-2.5 rounded-medical text-xs font-bold transition-all border-2 ${form.patientLocation === loc
+                                                    ? 'bg-medical-blue text-white border-medical-blue shadow-soft'
+                                                    : 'bg-white text-gray-500 border-medical-gray hover:border-medical-blue/30 hover:text-medical-blue'
+                                                    }`}>
+                                                <MapPin className="w-3 h-3 inline mr-1" />{loc}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
 
@@ -297,122 +314,135 @@ const DoctorDashboard = ({ activeView }) => {
                                     </div>
                                 )}
 
-                                {/* Delay Risk Panel */}
-                                {selectedHospital?.delayRisk && (
-                                    <div className={`medical-card p-6 border-2 ${getRiskColor(selectedHospital.delayRisk.level).border}`}>
-                                        <div className="flex items-center justify-between mb-5">
-                                            <h3 className="text-md font-bold text-medical-dark flex items-center gap-2">
-                                                <Shield className="w-5 h-5 text-medical-blue" /> AI Delay Risk Prediction
-                                            </h3>
-                                            <div className={`px-4 py-1.5 rounded-full text-xs font-bold ${getRiskColor(selectedHospital.delayRisk.level).bg} ${getRiskColor(selectedHospital.delayRisk.level).text}`}>
-                                                {selectedHospital.delayRisk.level === 'High' && '⚠️ '}{selectedHospital.delayRisk.level} Delay Risk
-                                            </div>
-                                        </div>
-
-                                        {/* Risk Score Bar */}
-                                        <div className="mb-6">
-                                            <div className="flex justify-between mb-2">
-                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Risk Index</span>
-                                                <span className={`text-sm font-bold ${getRiskColor(selectedHospital.delayRisk.level).text}`}>{selectedHospital.delayRisk.score}/100</span>
-                                            </div>
-                                            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                                                <motion.div initial={{ width: 0 }} animate={{ width: `${selectedHospital.delayRisk.score}%` }} transition={{ duration: 1 }}
-                                                    className={`h-full rounded-full ${getRiskColor(selectedHospital.delayRisk.level).bar}`} />
-                                            </div>
-                                        </div>
-
-                                        {/* Risk Factors */}
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                            {[
-                                                { label: 'Distance', value: `${selectedHospital.delayRisk.factors.distance} km`, icon: MapPin },
-                                                { label: 'ICU Load', value: `${selectedHospital.delayRisk.factors.icuOccupancy}%`, icon: Heart },
-                                                { label: 'General Load', value: `${selectedHospital.delayRisk.factors.hospitalLoad}%`, icon: Building2 },
-                                                { label: 'Est. Time', value: `${selectedHospital.delayRisk.factors.travelTime} min`, icon: Clock },
-                                            ].map(f => (
-                                                <div key={f.label} className="bg-medical-gray/50 rounded-medical p-4 text-center border border-medical-gray">
-                                                    <f.icon className="w-5 h-5 text-medical-blue mx-auto mb-2" />
-                                                    <div className="text-md font-bold text-medical-dark">{f.value}</div>
-                                                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{f.label}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <div className={`px-4 py-3 rounded-medical text-xs font-semibold ${getRiskColor(selectedHospital.delayRisk.level).bg} ${getRiskColor(selectedHospital.delayRisk.level).text} border border-current/10`}>
-                                            <Info className="w-4 h-4 inline mr-2" />
-                                            {selectedHospital.delayRisk.reason}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Best Hospital Suggestion */}
-                                <div className="medical-card p-8 border-2 border-medical-green/30 bg-green-50/5">
-                                    <div className="flex items-center gap-2 mb-6">
-                                        <div className="px-3 py-1 bg-medical-green text-white text-[10px] font-bold rounded-full uppercase tracking-widest shadow-soft">AI Optimized Choice</div>
-                                    </div>
-                                    <div className="flex items-start justify-between mb-6">
-                                        <div>
-                                            <h3 className="text-2xl font-bold text-medical-dark mb-1">{selectedHospital?.name}</h3>
-                                            <div className="text-sm text-gray-500 font-medium flex items-center gap-2">
-                                                <MapPin className="w-4 h-4 text-medical-blue" /> {selectedHospital?.city} • {selectedHospital?.distance} km away
-                                            </div>
-                                        </div>
-                                        <div className="bg-white border-2 border-medical-green rounded-2xl p-4 text-center shadow-medical">
-                                            <div className="text-3xl font-black text-medical-green">{selectedHospital?.score}</div>
-                                            <div className="text-[10px] font-bold text-gray-400 uppercase">Match Score</div>
-                                        </div>
-                                    </div>
-
-                                    {/* Explanation */}
-                                    <div className="bg-medical-green/10 border border-medical-green/20 rounded-medical p-4 mb-6">
-                                        <p className="text-sm font-semibold text-green-800 leading-relaxed">
-                                            💡 <span className="text-medical-green font-bold">Why this hospital?</span> {selectedHospital?.reasonString}
-                                        </p>
-                                    </div>
-
-                                    {/* Stats Grid */}
-                                    <div className="grid grid-cols-3 gap-4 mb-6">
-                                        <div className="bg-white rounded-medical p-4 text-center shadow-soft border border-medical-gray">
-                                            <Bed className="w-5 h-5 text-medical-blue mx-auto mb-2" />
-                                            <div className="text-lg font-bold text-medical-dark">{selectedHospital?.effectiveBeds}</div>
-                                            <div className="text-[10px] font-bold text-gray-400 uppercase">Beds Free</div>
-                                        </div>
-                                        <div className="bg-white rounded-medical p-4 text-center shadow-soft border border-medical-gray">
-                                            <Heart className="w-5 h-5 text-urgent-red mx-auto mb-2" />
-                                            <div className="text-lg font-bold text-medical-dark">{selectedHospital?.effectiveICU}</div>
-                                            <div className="text-[10px] font-bold text-gray-400 uppercase">ICU Units</div>
-                                        </div>
-                                        <div className="bg-white rounded-medical p-4 text-center shadow-soft border border-medical-gray">
-                                            <TrendingUp className="w-5 h-5 text-medical-green mx-auto mb-2" />
-                                            <div className="text-lg font-bold text-medical-dark">{selectedHospital?.survivalChance}%</div>
-                                            <div className="text-[10px] font-bold text-gray-400 uppercase">Survival Rank</div>
-                                        </div>
-                                    </div>
-
-                                    {/* Available specialists */}
-                                    <div className="flex flex-wrap gap-2 mb-6">
-                                        {selectedHospital?.specialists?.map(s => (
-                                            <span key={s} className={`px-4 py-1.5 rounded-full text-[11px] font-bold transition-all ${s === form.specialistNeeded ? 'bg-medical-blue text-white shadow-soft' : 'bg-medical-gray text-gray-500 border border-gray-200'}`}>
-                                                {s}
+                                {/* Location & Distance Filter */}
+                                <div className="medical-card p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-md font-bold text-medical-dark flex items-center gap-2">
+                                            <Filter className="w-5 h-5 text-medical-blue" /> Location Filter
+                                            <span className="text-xs font-medium text-gray-400 ml-2">
+                                                Patient at <span className="text-medical-blue font-bold">{form.patientLocation}</span>
                                             </span>
+                                        </h3>
+                                        <span className="text-xs font-bold text-gray-400">{filteredSuggestions.length} hospitals found</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {[
+                                            { id: 'near', label: 'Nearby (< 20 km)', icon: '📍' },
+                                            { id: 'mid', label: 'Within 50 km', icon: '🗺️' },
+                                            { id: 'all', label: 'All Locations', icon: '🌐' },
+                                        ].map(f => (
+                                            <button key={f.id} onClick={() => setDistFilter(f.id)}
+                                                className={`px-4 py-2 rounded-medical text-xs font-bold transition-all border-2 ${distFilter === f.id
+                                                    ? 'bg-medical-blue text-white border-medical-blue shadow-soft'
+                                                    : 'bg-white text-gray-500 border-medical-gray hover:border-medical-blue/30'
+                                                    }`}>
+                                                {f.icon} {f.label}
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
 
+
+                                {/* Best Hospital Suggestion */}
+                                {selectedHospital && (
+                                    <div className="medical-card p-8 border-2 border-medical-green/30 bg-green-50/5">
+                                        <div className="flex items-center gap-2 mb-6">
+                                            <div className="px-3 py-1 bg-medical-green text-white text-[10px] font-bold rounded-full uppercase tracking-widest shadow-soft">
+                                                <Star className="w-3 h-3 inline mr-1" />AI Optimized Choice
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start justify-between mb-6">
+                                            <div>
+                                                <h3 className="text-2xl font-bold text-medical-dark mb-1">{selectedHospital.name}</h3>
+                                                <div className="text-sm text-gray-500 font-medium flex items-center gap-2">
+                                                    <MapPin className="w-4 h-4 text-medical-blue" /> {selectedHospital.city} • {selectedHospital.distance} km away
+                                                    <span className="text-medical-blue font-bold">• ~{selectedHospital.travelTime} min travel</span>
+                                                </div>
+                                            </div>
+                                            <div className="bg-white border-2 border-medical-green rounded-2xl p-4 text-center shadow-medical">
+                                                <div className="text-3xl font-black text-medical-green">{selectedHospital.score}</div>
+                                                <div className="text-[10px] font-bold text-gray-400 uppercase">Match Score</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Explanation */}
+                                        <div className="bg-medical-green/10 border border-medical-green/20 rounded-medical p-4 mb-6">
+                                            <p className="text-sm font-semibold text-green-800 leading-relaxed">
+                                                💡 <span className="text-medical-green font-bold">Why this hospital?</span> {selectedHospital.reasonString}
+                                            </p>
+                                        </div>
+
+                                        {/* Stats Grid — Beds, ICU, Doctors, Survival */}
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                            <div className="bg-white rounded-medical p-4 text-center shadow-soft border border-medical-gray">
+                                                <Bed className="w-5 h-5 text-medical-blue mx-auto mb-2" />
+                                                <div className="text-lg font-bold text-medical-dark">{selectedHospital.effectiveBeds}</div>
+                                                <div className="text-[10px] font-bold text-gray-400 uppercase">Beds Free</div>
+                                            </div>
+                                            <div className="bg-white rounded-medical p-4 text-center shadow-soft border border-medical-gray">
+                                                <Heart className="w-5 h-5 text-urgent-red mx-auto mb-2" />
+                                                <div className="text-lg font-bold text-medical-dark">{selectedHospital.effectiveICU}</div>
+                                                <div className="text-[10px] font-bold text-gray-400 uppercase">ICU Units</div>
+                                            </div>
+                                            <div className="bg-white rounded-medical p-4 text-center shadow-soft border border-medical-gray">
+                                                <UsersIcon className="w-5 h-5 text-medical-green mx-auto mb-2" />
+                                                <div className="text-lg font-bold text-medical-dark">
+                                                    {Object.values(selectedHospital.specialistSlots || {}).reduce((a, b) => a + b, 0)}
+                                                </div>
+                                                <div className="text-[10px] font-bold text-gray-400 uppercase">Doctor Slots</div>
+                                            </div>
+                                            <div className="bg-white rounded-medical p-4 text-center shadow-soft border border-medical-gray">
+                                                <TrendingUp className="w-5 h-5 text-medical-green mx-auto mb-2" />
+                                                <div className="text-lg font-bold text-medical-dark">{selectedHospital.survivalChance}%</div>
+                                                <div className="text-[10px] font-bold text-gray-400 uppercase">Survival Rank</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Available specialists */}
+                                        <div className="flex flex-wrap gap-2 mb-4">
+                                            {selectedHospital.specialists?.map(s => (
+                                                <span key={s} className={`px-4 py-1.5 rounded-full text-[11px] font-bold transition-all ${s === form.specialistNeeded ? 'bg-medical-blue text-white shadow-soft' : 'bg-medical-gray text-gray-500 border border-gray-200'}`}>
+                                                    {s} {selectedHospital.specialistSlots?.[s] ? `(${selectedHospital.specialistSlots[s]} avail)` : ''}
+                                                </span>
+                                            ))}
+                                        </div>
+
+                                        {/* Equipment */}
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {selectedHospital.equipment?.map(eq => (
+                                                <span key={eq} className="px-3 py-1 rounded-full text-[10px] font-bold bg-gray-50 text-gray-500 border border-gray-100">
+                                                    {eq}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Other Options */}
-                                {aiResult.suggestions.length > 1 && (
+                                {filteredSuggestions.length > 1 && (
                                     <div className="medical-card p-8">
                                         <h3 className="text-md font-bold text-medical-dark mb-6 flex items-center gap-2">
                                             <BarChart3 className="w-5 h-5 text-medical-blue" /> Alternative Hospital Options
+                                            <span className="text-xs font-medium text-gray-400 ml-2">Ranked by proximity + availability</span>
                                         </h3>
                                         <div className="space-y-3">
-                                            {aiResult.suggestions.slice(1, 4).map(h => (
+                                            {filteredSuggestions.filter(h => h.id !== selectedHospital?.id).slice(0, 5).map((h, idx) => (
                                                 <button key={h.id} onClick={() => setSelectedHospital(h)}
-                                                    className={`w-full flex items-center justify-between p-4 rounded-medical border-2 transition-all text-left hover:shadow-soft ${selectedHospital?.id === h.id ? 'border-medical-blue bg-blue-50/50' : 'border-medical-gray bg-white'}`}>
-                                                    <div>
-                                                        <div className="text-md font-bold text-medical-dark">{h.name}</div>
-                                                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{h.city} • {h.distance} km • {h.effectiveBeds} Beds Available</div>
+                                                    className={`w-full flex items-center justify-between p-5 rounded-medical border-2 transition-all text-left hover:shadow-soft ${selectedHospital?.id === h.id ? 'border-medical-blue bg-blue-50/50' : 'border-medical-gray bg-white'}`}>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="text-[10px] font-bold text-gray-300">#{idx + 2}</span>
+                                                            <span className="text-md font-bold text-medical-dark">{h.name}</span>
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tight flex items-center gap-3 flex-wrap">
+                                                            <span><MapPin className="w-3 h-3 inline" /> {h.city} • {h.distance} km</span>
+                                                            <span><Bed className="w-3 h-3 inline" /> {h.effectiveBeds} beds</span>
+                                                            <span><Heart className="w-3 h-3 inline" /> {h.effectiveICU} ICU</span>
+                                                            <span><UsersIcon className="w-3 h-3 inline" /> {h.specialists.length} specialties</span>
+                                                            <span><Clock className="w-3 h-3 inline" /> ~{h.travelTime} min</span>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center gap-4">
+                                                    <div className="flex items-center gap-4 shrink-0 ml-4">
                                                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${getRiskColor(h.delayRisk.level).bg} ${getRiskColor(h.delayRisk.level).text}`}>
                                                             {h.delayRisk.level} Risk
                                                         </span>
@@ -445,7 +475,7 @@ const DoctorDashboard = ({ activeView }) => {
                                         className="w-24 h-24 bg-medical-green/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-medical">
                                         <CheckCircle2 className="w-12 h-12 text-medical-green" />
                                     </motion.div>
-                                    <h2 className="text-2xl font-bold text-medical-dark mb-2">Referral Confirmed & Syncronized</h2>
+                                    <h2 className="text-2xl font-bold text-medical-dark mb-2">Referral Confirmed & Synchronized</h2>
                                     <p className="text-gray-400 font-medium mb-10">Resources have been successfully allocated at {reservationResult.reservation?.hospitalName}</p>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto mb-10 text-left">
