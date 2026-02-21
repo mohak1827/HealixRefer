@@ -1,0 +1,32 @@
+AIzaSyBRuB3MKfgCiwoZ9Cf9PJOx0WumtR8fVRM  
+
+git log-- used to show the history of the commits
+untrack modified staging unmodified
+
+
+sha-- secure hash algorithm
+current branch is the master branch
+git push -- 
+U-- stands for untracked in Vs code
+M-- stands for modifying in Vs code
+rt-+ke side m-new repos.-tas-tracker-decription(demo project for tutorial)-private-add readme.md file -.git init-create repos.
+https ke baad-- address of remote repos.
+
+git bash
+paste
+paste(main in place of master branch)(now current branch is main branch)
+paste 3rd command((git push-)pushes local repo. to remote repo.)(sign in if asked)
+git add .
+git add .
+git commit -m 'Added task 5'
+git push
+
+desktop pe jo h vo local repos.
+and GitHub is remote repository
+
+
+
+
+git pull
+it shows modified
+bring it to staging area

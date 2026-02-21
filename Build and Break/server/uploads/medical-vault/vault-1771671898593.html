@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Bank Transaction Alert Generator</title>
+    <link rel="stylesheet" href="bank.css">
+</head>
+<body>
+    <div class="app-container">
+        <h2>Bank Transaction Alert Generator</h2>
+        <p>Simulate a Bank transaction alert SMS received on a phone screen.</p>
+        <div class="form-container">
+            <form id="transactionForm">
+                <label for="receiverName">Receiver's Name:</label>
+                <input type="text" id="receiverName" placeholder="Enter Receiver's Name" required>
+                <label for="accountNumber">Account Number:</label>
+                <input type="text" id="accountNumber" placeholder="Enter Account Number" maxlength="10" required>
+                <label for="amount">Transaction Amount (₦):</label>
+                <input type="number" id="amount" placeholder="Enter Amount" required>
+                <label for="transactionType">Transaction Type:</label>
+                <select id="transactionType" required>
+                    <option value="Credit">Credit</option>
+                    <option value="Debit">Debit</option>
+                </select>
+                <label for="transactionDate">Transaction Date:</label>
+                <input type="date" id="transactionDate" required>
+                <button type="submit">Generate SMS Alert</button>
+            </form>
+        </div>
+        <div id="smsAlertBox" class="sms-alert hidden">
+            <p id="smsAlertText"></p>
+        </div>
+    </div>
+    <script src="bank.js"></script>
+</body>
+</html>

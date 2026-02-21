@@ -3,13 +3,20 @@ import { motion } from 'framer-motion';
 import {
     LayoutDashboard, FileText, Plus, Building2, Bed, AlertTriangle,
     Truck, MapPin, Settings, LogOut, Heart, Stethoscope, User,
-    Activity, History, BarChart3, CheckCircle2, Globe, Shield, Cpu, TrendingUp
+    Activity, History, BarChart3, CheckCircle2, Globe, Shield, Cpu, TrendingUp,
+    Brain, Calendar, FileBox, Clock
 } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const MENU_CONFIG = {
     'Patient': [
-        { id: 'dashboard', label: 'My Dashboard', icon: LayoutDashboard },
+        { id: 'dashboard', label: 'Overview', icon: LayoutDashboard, path: '/patient/dashboard' },
+        { id: 'ai-analysis', label: 'AI Health Analysis', icon: Brain, path: '/patient/ai-analysis' },
+        { id: 'referrals', label: 'My Referrals', icon: Activity, path: '/patient/referrals' },
+        { id: 'medical-vault', label: 'Medical Vault', icon: FileBox, path: '/patient/medical-vault' },
+        { id: 'appointments', label: 'Appointments', icon: Calendar, path: '/patient/appointments' },
+        { id: 'timeline', label: 'History Timeline', icon: Clock, path: '/patient/timeline' },
     ],
     'Doctor': [
         { id: 'dashboard', label: 'New Referral', icon: Plus },
@@ -36,6 +43,7 @@ const ROLE_STYLES = {
 
 const Sidebar = ({ activeTab, setActiveTab }) => {
     const { user, logout } = useAuth();
+    const location = useLocation();
     const menuItems = MENU_CONFIG[user?.role] || [];
     const roleStyle = ROLE_STYLES[user?.role] || ROLE_STYLES.Patient;
     const RoleIcon = roleStyle.icon;
@@ -67,21 +75,37 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
             <nav className="flex-1 p-5 space-y-1 overflow-y-auto">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 px-3">Main Navigation</p>
                 {menuItems.map(item => {
-                    const isActive = activeTab === item.id;
-                    return (
-                        <button
-                            key={item.id}
-                            onClick={() => setActiveTab(item.id)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-medical text-sm font-semibold transition-all group relative ${isActive
-                                ? 'bg-medical-blue text-white shadow-soft'
-                                : 'text-gray-500 hover:text-medical-blue hover:bg-medical-gray'
-                                }`}
-                        >
+                    const isActive = user?.role === 'Patient' ? location.pathname === item.path : activeTab === item.id;
+                    const content = (
+                        <>
                             <item.icon className={`w-[20px] h-[20px] ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-medical-blue'} transition-colors`} />
                             <span>{item.label}</span>
                             {isActive && (
                                 <motion.div layoutId="active-indicator" className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
                             )}
+                        </>
+                    );
+
+                    const className = `w-full flex items-center gap-3 px-4 py-3 rounded-medical text-sm font-semibold transition-all group relative ${isActive
+                        ? 'bg-medical-blue text-white shadow-soft'
+                        : 'text-gray-500 hover:text-medical-blue hover:bg-medical-gray'
+                        }`;
+
+                    if (user?.role === 'Patient' && item.path) {
+                        return (
+                            <Link key={item.id} to={item.path} className={className}>
+                                {content}
+                            </Link>
+                        );
+                    }
+
+                    return (
+                        <button
+                            key={item.id}
+                            onClick={() => setActiveTab(item.id)}
+                            className={className}
+                        >
+                            {content}
                         </button>
                     );
                 })}
