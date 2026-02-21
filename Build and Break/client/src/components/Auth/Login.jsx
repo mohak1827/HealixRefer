@@ -67,7 +67,7 @@ const Login = ({ initialIsLogin = true }) => {
                     <div className="w-10 h-10 bg-healix-navy rounded-xl flex items-center justify-center text-white font-black text-xl">H</div>
                     <span className="text-xl font-extrabold text-healix-navy">Healix<span className="text-healix-teal">Refer</span></span>
                 </div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.25em]">AI Rural Healthcare System</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.25em]">AI Healthcare Referral System</p>
             </div>
 
             <div className="healix-card p-8">

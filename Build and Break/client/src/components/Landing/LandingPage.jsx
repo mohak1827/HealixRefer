@@ -16,6 +16,7 @@ const LandingPage = () => {
 
     const openAuth = (mode) => {
         setAuthMode(mode);
+
         setShowLogin(true);
     };
 
@@ -39,8 +40,8 @@ const LandingPage = () => {
             <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${scrolled ? 'py-4 bg-white shadow-soft' : 'py-6 bg-transparent'}`}>
                 <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-medical-blue rounded-lg flex items-center justify-center text-white font-bold text-xl">R</div>
-                        <span className="text-xl font-bold tracking-tight text-medical-dark">Rural<span className="text-medical-green">Health</span></span>
+                        <div className="w-10 h-10 bg-healix-navy rounded-lg flex items-center justify-center text-white font-bold text-xl">H</div>
+                        <span className="text-xl font-extrabold tracking-tight text-healix-navy">Healix<span className="text-healix-teal">Refer</span></span>
                     </div>
                     <div className="hidden md:flex items-center gap-6">
                         <a href="#features" className="text-sm font-medium text-gray-600 hover:text-medical-blue">How it Works</a>
@@ -66,9 +67,9 @@ const LandingPage = () => {
                         transition={{ duration: 0.6 }}
                     >
                         <h1 className="text-5xl lg:text-6xl font-bold text-medical-dark leading-tight mb-6">
-                            Smart AI-Based <br />
-                            <span className="text-medical-green">Rural Healthcare</span> <br />
-                            Referral System
+                            AI-Powered <br />
+                            <span className="text-healix-teal">Healthcare Referral</span> <br />
+                            Intelligence System
                         </h1>
                         <p className="text-xl text-gray-600 mb-10 leading-relaxed max-w-lg">
                             Empowering rural clinics with real-time hospital coordination, bed availability tracking, and AI-driven referral optimization.
@@ -113,7 +114,7 @@ const LandingPage = () => {
             <section id="features" className="py-24 bg-medical-gray">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold text-medical-dark mb-4">Why Choose RuralHealth?</h2>
+                        <h2 className="text-3xl font-bold text-healix-navy mb-4">Why Choose HealixRefer?</h2>
                         <div className="w-20 h-1.5 bg-medical-green mx-auto rounded-full" />
                     </div>
 
@@ -157,8 +158,8 @@ const LandingPage = () => {
             <footer className="py-12 border-t border-medical-gray bg-white">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-medical-blue rounded-lg flex items-center justify-center text-white font-bold">R</div>
-                        <span className="text-lg font-bold text-medical-dark">Rural<span className="text-medical-green">Health</span></span>
+                        <div className="w-8 h-8 bg-healix-navy rounded-lg flex items-center justify-center text-white font-bold text-lg">H</div>
+                        <span className="text-lg font-bold text-healix-navy">Healix<span className="text-healix-teal">Refer</span></span>
                     </div>
                     <div className="flex gap-8 text-sm font-medium text-gray-500">
                         <a href="#" className="hover:text-medical-blue">Emergency</a>
@@ -167,7 +168,7 @@ const LandingPage = () => {
                         <a href="#" className="hover:text-medical-blue">Privacy Policy</a>
                     </div>
                     <div className="text-sm text-gray-400">
-                        © 2026 Rural Healthcare System. All rights reserved.
+                        © 2026 Healix Healthcare Intelligence. All rights reserved.
                     </div>
                 </div>
             </footer>

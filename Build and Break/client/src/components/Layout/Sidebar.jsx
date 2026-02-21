@@ -53,11 +53,11 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
             {/* Brand */}
             <div className="p-7 border-b border-medical-gray">
                 <div className="flex items-center gap-3 mb-5">
-                    <div className="w-10 h-10 bg-medical-blue rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-medical">
-                        R
+                    <div className="w-10 h-10 bg-healix-blue rounded-xl flex items-center justify-center text-white font-black text-xl shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                        H
                     </div>
-                    <span className="text-xl font-bold tracking-tight text-medical-dark">
-                        Rural<span className="text-medical-green">Health</span>
+                    <span className="text-xl font-black tracking-tight text-healix-navy">
+                        Healix<span className="text-healix-teal">Refer</span>
                     </span>
                 </div>
                 {/* Role badge */}
