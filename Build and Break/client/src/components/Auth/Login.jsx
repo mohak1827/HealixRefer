@@ -43,7 +43,7 @@ const Login = () => {
                 setIsLogin(true);
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed. Check your credentials.');
+            setError(err.message || 'Login failed. Check your credentials.');
         }
         setLoading(false);
     };
