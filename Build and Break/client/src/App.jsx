@@ -7,7 +7,7 @@ import Sidebar from './components/Layout/Sidebar';
 import PatientDashboard from './components/Dashboard/PatientDashboard';
 import DoctorDashboard from './components/Dashboard/DoctorDashboard';
 import AdminDashboard from './components/Dashboard/AdminDashboard';
-import AmbulanceDashboard from './components/Dashboard/AmbulanceDashboard';
+import AmbulancePage from './components/Ambulance/AmbulancePage';
 import SuperAdminDashboard from './components/Dashboard/SuperAdminDashboard';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -34,7 +34,7 @@ const DashboardContent = () => {
             case 'Patient': return <PatientDashboard />;
             case 'Doctor': return <DoctorDashboard activeView={activeTab === 'history' ? 'history' : 'create'} />;
             case 'Hospital Admin': return <AdminDashboard />;
-            case 'Ambulance': return <AmbulanceDashboard />;
+            case 'Ambulance': return <AmbulancePage activeView={activeTab === 'history' ? 'history' : activeTab === 'active' ? 'active' : 'dashboard'} />;
             case 'Super Admin': return <SuperAdminDashboard />;
             default: return <PatientDashboard />;
         }
