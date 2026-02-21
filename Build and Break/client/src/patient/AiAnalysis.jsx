@@ -25,8 +25,9 @@ const AiAnalysis = () => {
 
     const getSeverityStyles = (severity) => {
         switch (severity) {
+            case 'Critical': return 'bg-red-600 text-white border-red-700';
             case 'High': return 'bg-red-50 text-red-600 border-red-100';
-            case 'Medium': return 'bg-amber-50 text-amber-600 border-amber-100';
+            case 'Moderate': return 'bg-amber-50 text-amber-600 border-amber-100';
             default: return 'bg-emerald-50 text-emerald-600 border-emerald-100';
         }
     };
@@ -145,7 +146,7 @@ const AiAnalysis = () => {
                                 </div>
 
                                 <div className="pt-4">
-                                    {result.severity === 'High' ? (
+                                    {(result.severity === 'High' || result.severity === 'Critical') ? (
                                         <button
                                             onClick={() => navigate('/patient/referrals')}
                                             className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-red-700 transition-all active:scale-95"

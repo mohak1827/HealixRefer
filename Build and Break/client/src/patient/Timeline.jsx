@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Activity, Brain, Calendar, FileBox, ArrowRight, User, AlertCircle, Sparkles, Filter, Search } from 'lucide-react';
+import { Clock, Activity, Brain, Calendar, FileBox, ArrowRight, User, AlertCircle, Sparkles, Filter, Search, CheckCircle2, Trash2 } from 'lucide-react';
 import patientService from './services/patientService';
 
 const EVENT_CONFIG = {
@@ -27,6 +27,18 @@ const Timeline = () => {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDeleteEvent = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this event from your history?')) return;
+        try {
+            const res = await patientService.deleteTimelineEvent(id);
+            if (res.success) {
+                setEvents(prev => prev.filter(e => e.id !== id));
+            }
+        } catch (err) {
+            console.error('Failed to delete event:', err);
         }
     };
 
@@ -111,17 +123,25 @@ const Timeline = () => {
                                     <div className="absolute left-16 top-8 w-8 h-0.5 bg-medical-gray/60" />
 
                                     <div className="medical-card p-6 bg-white hover:border-transparent transition-all duration-300 hover:shadow-xl relative">
-                                        <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
+                                        <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity pointer-events-none">
                                             <config.icon className="w-24 h-24" />
                                         </div>
 
-                                        <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center justify-between mb-4 relative z-10">
                                             <div className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${config.color} ${config.border}`}>
                                                 {event.type}
                                             </div>
-                                            <span className="text-[10px] font-bold text-gray-300 uppercase">
-                                                {new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </span>
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-[10px] font-bold text-gray-300 uppercase">
+                                                    {new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                                <button
+                                                    onClick={() => handleDeleteEvent(event.id)}
+                                                    className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <h3 className="text-lg font-black text-medical-dark mb-2 tracking-tight group-hover:text-medical-blue transition-colors uppercase">

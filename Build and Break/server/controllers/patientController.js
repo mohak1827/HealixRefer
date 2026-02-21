@@ -8,26 +8,100 @@ const Notification = require('../models/Notification');
 const Reservation = require('../models/Reservation');
 const dbStore = require('../dbStore');
 
-// AI Emergency Severity Classifier (Simplified for Patient Module)
-const classifySeverity = (symptoms, age) => {
-    const symptomsLower = (symptoms || '').toLowerCase();
-    let score = 0;
+// Advanced Clinical Triage Logic
+const triageAI = (symptoms, age) => {
+    const input = (symptoms || '').toLowerCase();
 
-    const criticalKeywords = ['chest pain', 'breathing difficulty', 'unconscious', 'severe bleeding', 'stroke', 'paralysis', 'seizure', 'heavy bleeding', 'shortness of breath'];
-    const highKeywords = ['high fever', 'severe pain', 'fracture', 'head injury', 'abdominal pain', 'persistent headache', 'sudden weakness'];
-    const moderateKeywords = ['fever', 'cough', 'vomiting', 'nausea', 'dizziness', 'rash', 'fatigue', 'sore throat'];
+    // 1. Red Flags Definition (Critical Scenarios)
+    const redFlags = [
+        { keywords: ['chest pain', 'heart pain', 'angina', 'myocardial', 'pressure in chest'], system: 'Cardiovascular', weight: 75 },
+        { keywords: ['breathing difficulty', 'shortness of breath', 'dyspnea', 'suffocating', 'gasping'], system: 'Respiratory', weight: 75 },
+        { keywords: ['numbness', 'paralysis', 'slurred speech', 'facial drooping', 'stroke', 'hemiplegia'], system: 'Neurological', weight: 75 },
+        { keywords: ['severe bleeding', 'uncontrolled hemorrhage', 'vomiting blood', 'blood in stool'], system: 'Vascular', weight: 70 },
+        { keywords: ['unconscious', 'fainted', 'passed out', 'non responsive'], system: 'General', weight: 70 },
+        { keywords: ['seizure', 'convulsion', 'fitting'], system: 'Neurological', weight: 70 },
+        { keywords: ['severe abdominal pain', 'stomach stabbing', 'guarding'], system: 'Gastrointestinal', weight: 70 },
+        { keywords: ['suicidal', 'harm myself', 'self harm'], system: 'Psychological', weight: 70 },
+        { keywords: ['sudden severe headache', 'worst headache', 'thunderclap'], system: 'Neurological', weight: 70 },
+        { keywords: ['anaphylaxis', 'severe allergic', 'throat closing', 'tongue swelling'], system: 'Immune', weight: 70 }
+    ];
 
-    criticalKeywords.forEach(k => { if (symptomsLower.includes(k)) score += 40; });
-    highKeywords.forEach(k => { if (symptomsLower.includes(k)) score += 20; });
-    moderateKeywords.forEach(k => { if (symptomsLower.includes(k)) score += 10; });
+    // 2. Body System Detection (Symptom Clusters)
+    const systems = {
+        'Cardiovascular': ['palpitations', 'racing heart', 'irregular pulse', 'lightheaded'],
+        'Respiratory': ['coughing', 'wheezing', 'chest tightness', 'phlegm'],
+        'Neurological': ['dizziness', 'confusion', 'vision loss', 'blurred vision', 'tremor'],
+        'Gastrointestinal': ['vomiting', 'nausea', 'diarrhea', 'bloating', 'cramp'],
+        'Musculoskeletal': ['joint pain', 'muscle ache', 'back pain', 'stiffness'],
+        'General': ['fever', 'fatigue', 'weakness', 'chills', 'weight loss']
+    };
 
-    if (age > 60 || age < 5) score += 10;
+    let baseScore = 0;
+    let affectedSystems = new Set();
+    let redFlagCount = 0;
 
+    // Check Red Flags
+    redFlags.forEach(flag => {
+        if (flag.keywords.some(k => input.includes(k))) {
+            baseScore = Math.max(baseScore, flag.weight);
+            affectedSystems.add(flag.system);
+            redFlagCount++;
+        }
+    });
+
+    // Body System Logic
+    Object.entries(systems).forEach(([name, keywords]) => {
+        if (keywords.some(k => input.includes(k))) {
+            affectedSystems.add(name);
+            if (baseScore < 30) baseScore += 15;
+            else if (baseScore < 60) baseScore += 5;
+        }
+    });
+
+    // 3. Clinical Multipliers
+    if (redFlagCount > 1) {
+        baseScore = 85 + (redFlagCount * 3);
+    } else if (affectedSystems.size > 2) {
+        baseScore += (affectedSystems.size * 5);
+    }
+
+    // 4. Demographic Risk Adjustment
+    if (age > 65 || age < 5) baseScore += 10;
+    if (age > 80) baseScore += 5;
+
+    // 5. Hard Safety Overrides (Never Low)
+    const isCriticalSystem = input.includes('heart') || input.includes('chest') || input.includes('breath') || input.includes('stroke') || input.includes('head injury');
+    if (isCriticalSystem) {
+        baseScore = Math.max(baseScore, 45);
+    }
+
+    // Handle Vague but Alarming terms
+    if (baseScore < 30 && (input.includes('severe') || input.includes('intense') || input.includes('sudden') || input.includes('agony'))) {
+        baseScore = 35;
+    }
+
+    // Risk Caps & Floors
+    const score = Math.min(100, Math.max(10, baseScore));
+
+    // Final Risk Classification (User Scale)
     let severity = 'Low';
-    if (score >= 50) severity = 'High';
-    else if (score >= 25) severity = 'Medium';
+    if (score > 85) severity = 'Critical';
+    else if (score > 60) severity = 'High';
+    else if (score > 25) severity = 'Moderate';
 
-    return { severity, score: Math.min(100, score || 10) };
+    // Specialist Mapping
+    let suggestedSpecialist = 'General Physician';
+    if (affectedSystems.has('Cardiovascular')) suggestedSpecialist = 'Cardiologist';
+    else if (affectedSystems.has('Neurological')) suggestedSpecialist = 'Neurologist';
+    else if (affectedSystems.has('Respiratory')) suggestedSpecialist = 'Pulmonologist';
+    else if (affectedSystems.has('Gastrointestinal')) suggestedSpecialist = 'Gastroenterologist';
+    else if (affectedSystems.has('Psychological')) suggestedSpecialist = 'Psychiatrist';
+
+    if (severity === 'Critical' || severity === 'High') {
+        suggestedSpecialist = `Emergency / ${suggestedSpecialist}`;
+    }
+
+    return { severity, score, suggestedSpecialist, system: Array.from(affectedSystems).join(', ') };
 };
 
 const createTimelineEvent = async (patientId, type, title, description, metadata = {}) => {
@@ -65,28 +139,25 @@ exports.analyzeSymptoms = async (req, res) => {
         }
         const age = patient ? patient.age : (req.user.age || 30);
 
-        const analysis = classifySeverity(symptoms, age);
+        const analysis = triageAI(symptoms, age);
 
-        let recommendation = '';
-        let specialist = 'General Physician';
-
-        if (analysis.severity === 'High') {
-            recommendation = 'Critical symptoms detected. Immediate referral recommended.';
-            specialist = 'Emergency Specialist';
-        } else if (analysis.severity === 'Medium') {
-            recommendation = 'Moderate symptoms. Consider consulting a specialist soon.';
-            specialist = 'Specialist (Internal Medicine)';
-        } else {
-            recommendation = 'Symptoms appear mild. Monitor and rest.';
+        let recommendation = 'Symptoms appear mild. Monitor and rest.';
+        if (analysis.severity === 'Critical') {
+            recommendation = '⚠️ EMERGENCY: Life-threatening symptoms detected. Please head to the nearest emergency department immediately.';
+        } else if (analysis.severity === 'High') {
+            recommendation = 'Urgent clinical attention required. Please schedule a priority consultation.';
+        } else if (analysis.severity === 'Moderate') {
+            recommendation = 'Non-emergency but requires evaluation. Consider booking an appointment with a specialist.';
         }
 
-        await createTimelineEvent(patient?.id || req.user.id, 'Analysis', 'Symptoms Analyzed', `AI analyzed symptoms: ${symptoms.substring(0, 50)}...`, { analysis });
+        await createTimelineEvent(patient?.id || req.user.id, 'Analysis', 'Advanced Triage Analysis', `AI analyzed symptoms: ${symptoms.substring(0, 50)}...`, { analysis });
 
         res.json({
-            ...analysis,
+            severity: analysis.severity,
             recommendation,
-            specialist,
-            riskScore: analysis.score
+            specialist: analysis.suggestedSpecialist,
+            riskScore: analysis.score,
+            affectedSystem: analysis.system
         });
     } catch (err) {
         res.status(500).json({ message: 'AI Analysis failed', error: err.message });
@@ -406,6 +477,21 @@ exports.getTimeline = async (req, res) => {
         res.json(timeline);
     } catch (err) {
         res.status(500).json({ message: 'Failed to fetch timeline' });
+    }
+};
+
+exports.deleteTimelineEvent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log('🗑️ DeleteTimelineEvent hit for:', id, 'DB connected:', dbStore.isDbConnected);
+        if (dbStore.isDbConnected) {
+            await TimelineEvent.findOneAndDelete({ id });
+        } else {
+            dbStore.memTimelineEvents = dbStore.memTimelineEvents.filter(e => e.id !== id);
+        }
+        res.json({ success: true, message: 'Timeline event deleted' });
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to delete timeline event' });
     }
 };
 

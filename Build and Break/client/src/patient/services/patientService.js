@@ -58,6 +58,10 @@ const patientService = {
         const res = await axios.get(`${API_URL}/timeline`);
         return res.data;
     },
+    deleteTimelineEvent: async (id) => {
+        const res = await axios.delete(`${API_URL}/timeline/${id}`);
+        return res.data;
+    },
 
     // Appointments
     getAppointments: async () => {

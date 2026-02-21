@@ -59,6 +59,7 @@ router.get('/download/:id', patientController.downloadMedicalFile);
 
 // Timeline
 router.get('/timeline', patientController.getTimeline);
+router.delete('/timeline/:id', patientController.deleteTimelineEvent);
 
 // Appointments
 router.post('/appointment', patientController.bookAppointment);
