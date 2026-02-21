@@ -1,50 +1,94 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 
 const AuthContext = createContext();
+
+const USERS_KEY = 'healix_users';
+const SESSION_KEY = 'healix_session';
+
+const DEMO_USERS = [
+    { id: 'demo_Patient', name: 'Ramesh Kumar', email: 'patient@healix.ai', password: 'password123', role: 'Patient', village: 'Sehore', age: 45, contact: '9876543210' },
+    { id: 'demo_Doctor', name: 'Dr. Arjun Sharma', email: 'doctor@healix.ai', password: 'password123', role: 'Doctor', phcName: 'Sehore PHC' },
+    { id: 'demo_Hospital_Admin', name: 'Admin Priya Singh', email: 'admin@healix.ai', password: 'password123', role: 'Hospital Admin', hospitalId: 1 },
+    { id: 'demo_Ambulance', name: 'Ravi Kumar', email: 'ambulance@healix.ai', password: 'password123', role: 'Ambulance', vehicleNo: 'MP-04-AB-1234' },
+    { id: 'demo_Super_Admin', name: 'Dr. Meera Patel', email: 'superadmin@healix.ai', password: 'password123', role: 'Super Admin', district: 'Sehore' },
+];
+
+function getUsers() {
+    try {
+        const raw = localStorage.getItem(USERS_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
+
+function saveUsers(users) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+function seedDemoUsers() {
+    let users = getUsers();
+    if (!users) {
+        users = [...DEMO_USERS];
+        saveUsers(users);
+    }
+    return users;
+}
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [token, setToken] = useState(localStorage.getItem('token'));
 
+    // On mount: seed demo users + restore session
     useEffect(() => {
-        if (token) {
-            localStorage.setItem('token', token);
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            fetchUser();
-        } else {
-            localStorage.removeItem('token');
-            delete axios.defaults.headers.common['Authorization'];
-            setUser(null);
-            setLoading(false);
-        }
-    }, [token]);
-
-    const fetchUser = async () => {
+        seedDemoUsers();
         try {
-            const res = await axios.get('/api/auth/me');
-            setUser(res.data);
-        } catch (err) {
-            setToken(null);
-        } finally {
-            setLoading(false);
+            const session = localStorage.getItem(SESSION_KEY);
+            if (session) {
+                setUser(JSON.parse(session));
+            }
+        } catch {
+            localStorage.removeItem(SESSION_KEY);
         }
-    };
+        setLoading(false);
+    }, []);
 
     const login = async (email, password) => {
-        const res = await axios.post('/api/auth/login', { email, password });
-        setToken(res.data.token);
-        setUser(res.data.user);
-        return res.data.user;
+        const users = getUsers() || [];
+        const found = users.find(u => u.email === email);
+        if (!found) {
+            throw new Error('No account found with this email.');
+        }
+        if (found.password !== password) {
+            throw new Error('Invalid password. Please try again.');
+        }
+        // Strip password before storing in session
+        const { password: _, ...sessionUser } = found;
+        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
+        setUser(sessionUser);
+        return sessionUser;
     };
 
     const register = async (name, email, password, role) => {
-        await axios.post('/api/auth/register', { name, email, password, role });
+        const users = getUsers() || seedDemoUsers();
+        const exists = users.find(u => u.email === email);
+        if (exists) {
+            throw new Error('An account with this email already exists.');
+        }
+        const newUser = {
+            id: `user_${Date.now()}`,
+            name,
+            email,
+            password,
+            role,
+        };
+        users.push(newUser);
+        saveUsers(users);
     };
 
     const logout = () => {
-        setToken(null);
+        localStorage.removeItem(SESSION_KEY);
+        setUser(null);
     };
 
     const updateUser = (newData) => {

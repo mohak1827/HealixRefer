@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
     LayoutDashboard, FileText, Plus, Building2, Bed, AlertTriangle,
     Truck, MapPin, Settings, LogOut, Heart, Stethoscope, User,
-    Activity, History, BarChart3, CheckCircle2, Globe, Shield, Cpu, TrendingUp,
+    Activity, History, BarChart3, CheckCircle2, Globe, Shield, Cpu, TrendingUp, Radio,
     Brain, Calendar, FileBox, Clock
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -26,7 +26,9 @@ const MENU_CONFIG = {
         { id: 'dashboard', label: 'Hospital Overview', icon: LayoutDashboard },
     ],
     'Ambulance': [
-        { id: 'dashboard', label: 'Ambulance Panel', icon: Truck },
+        { id: 'dashboard', label: 'Control Center', icon: Truck },
+        { id: 'active', label: 'Active Missions', icon: Radio },
+        { id: 'history', label: 'Transport History', icon: History },
     ],
     'Super Admin': [
         { id: 'dashboard', label: 'System Analytics', icon: BarChart3 },
@@ -34,11 +36,11 @@ const MENU_CONFIG = {
 };
 
 const ROLE_STYLES = {
-    'Patient': { color: 'text-medical-green', bg: 'bg-green-50', icon: Heart, label: 'Patient Portal' },
-    'Doctor': { color: 'text-medical-blue', bg: 'bg-blue-50', icon: Stethoscope, label: 'Doctor Panel' },
-    'Hospital Admin': { color: 'text-medical-green', bg: 'bg-green-50', icon: Building2, label: 'Hospital Admin' },
-    'Ambulance': { color: 'text-orange-500', bg: 'bg-orange-50', icon: Truck, label: 'Ambulance Control' },
-    'Super Admin': { color: 'text-medical-blue', bg: 'bg-blue-50', icon: Shield, label: 'Health Ministry' },
+    'Patient': { color: 'text-healix-teal', bg: 'bg-teal-50', icon: Heart, label: 'Patient Portal' },
+    'Doctor': { color: 'text-healix-blue', bg: 'bg-blue-50', icon: Stethoscope, label: 'Doctor Panel' },
+    'Hospital Admin': { color: 'text-healix-teal', bg: 'bg-teal-50', icon: Building2, label: 'Hospital Admin' },
+    'Ambulance': { color: 'text-healix-blue', bg: 'bg-blue-50', icon: Truck, label: 'Ambulance Control' },
+    'Super Admin': { color: 'text-healix-navy', bg: 'bg-slate-100', icon: Shield, label: 'Health Ministry' },
 };
 
 const Sidebar = ({ activeTab, setActiveTab }) => {
@@ -57,11 +59,11 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
             {/* Brand */}
             <div className="p-7 border-b border-medical-gray">
                 <div className="flex items-center gap-3 mb-5">
-                    <div className="w-10 h-10 bg-medical-blue rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-medical">
-                        R
+                    <div className="w-10 h-10 bg-healix-navy rounded-xl flex items-center justify-center text-white font-black text-xl">
+                        H
                     </div>
-                    <span className="text-xl font-bold tracking-tight text-medical-dark">
-                        Rural<span className="text-medical-green">Health</span>
+                    <span className="text-xl font-extrabold tracking-tight text-healix-navy">
+                        Healix<span className="text-healix-teal">Refer</span>
                     </span>
                 </div>
                 {/* Role badge */}
@@ -78,7 +80,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                     const isActive = user?.role === 'Patient' ? location.pathname === item.path : activeTab === item.id;
                     const content = (
                         <>
-                            <item.icon className={`w-[20px] h-[20px] ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-medical-blue'} transition-colors`} />
+                            <item.icon className={`w-[20px] h-[20px] ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-healix-blue'} transition-colors`} />
                             <span>{item.label}</span>
                             {isActive && (
                                 <motion.div layoutId="active-indicator" className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
@@ -87,8 +89,8 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                     );
 
                     const className = `w-full flex items-center gap-3 px-4 py-3 rounded-medical text-sm font-semibold transition-all group relative ${isActive
-                        ? 'bg-medical-blue text-white shadow-soft'
-                        : 'text-gray-500 hover:text-medical-blue hover:bg-medical-gray'
+                        ? 'bg-healix-navy text-white shadow-soft'
+                        : 'text-gray-500 hover:text-healix-blue hover:bg-slate-50'
                         }`;
 
                     if (user?.role === 'Patient' && item.path) {
@@ -114,11 +116,11 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
             {/* User Info & Logout */}
             <div className="p-5 border-t border-medical-gray">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-9 h-9 bg-medical-gray rounded-full flex items-center justify-center text-medical-blue text-xs font-bold">
+                    <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-healix-navy text-xs font-bold">
                         {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-medical-dark truncate">{user?.name}</div>
+                        <div className="text-sm font-bold text-healix-navy truncate">{user?.name}</div>
                         <div className="text-[10px] text-gray-400 truncate">{user?.email}</div>
                     </div>
                 </div>
@@ -132,4 +134,3 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
 };
 
 export default Sidebar;
-

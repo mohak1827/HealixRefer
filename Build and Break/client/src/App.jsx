@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
-import LandingPage from './components/Landing/LandingPage';
+import Login from './components/Auth/Login';
 import Sidebar from './components/Layout/Sidebar';
 import DoctorDashboard from './components/Dashboard/DoctorDashboard';
 import AdminDashboard from './components/Dashboard/AdminDashboard';
-import AmbulanceDashboard from './components/Dashboard/AmbulanceDashboard';
+import AmbulancePage from './components/Ambulance/AmbulancePage';
 import SuperAdminDashboard from './components/Dashboard/SuperAdminDashboard';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
@@ -34,7 +34,7 @@ const DashboardContent = () => {
         </div>
     );
 
-    if (!user) return <LandingPage />;
+    if (!user) return <Login />;
 
     return (
         <div className="min-h-screen bg-light-gradient flex selection:bg-healix-teal selection:text-white">
@@ -68,7 +68,7 @@ const DashboardContent = () => {
                                 <Route path="*" element={
                                     user.role === 'Doctor' ? <DoctorDashboard activeView={activeTab === 'history' ? 'history' : 'create'} /> :
                                         user.role === 'Hospital Admin' ? <AdminDashboard /> :
-                                            user.role === 'Ambulance' ? <AmbulanceDashboard /> :
+                                            user.role === 'Ambulance' ? <AmbulancePage activeView={activeTab === 'history' ? 'history' : activeTab === 'active' ? 'active' : 'dashboard'} /> :
                                                 user.role === 'Super Admin' ? <SuperAdminDashboard /> :
                                                     <div className="p-10 text-center text-gray-400">Section Under Development</div>
                                 } />
