@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
-import LandingPage from './components/Landing/LandingPage';
+import Login from './components/Auth/Login';
 import Sidebar from './components/Layout/Sidebar';
 import DoctorDashboard from './components/Dashboard/DoctorDashboard';
 import AdminDashboard from './components/Dashboard/AdminDashboard';
@@ -34,7 +34,7 @@ const DashboardContent = () => {
         </div>
     );
 
-    if (!user) return <LandingPage />;
+    if (!user) return <Login />;
 
     return (
         <div className="min-h-screen bg-light-gradient flex selection:bg-healix-teal selection:text-white">

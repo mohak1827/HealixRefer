@@ -60,7 +60,7 @@ const Login = () => {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-md mx-auto"
+            className="w-full max-w-md mx-auto min-h-screen flex flex-col justify-center py-12"
         >
             <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-2 mb-4">
@@ -181,22 +181,6 @@ const Login = () => {
                 </form>
             </div>
 
-            {/* Quick Demo Login */}
-            {isLogin && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-                    className="mt-6 healix-card p-6">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] text-center mb-4">Quick Demo Login</p>
-                    <div className="grid grid-cols-2 gap-3">
-                        {DEMO_CREDENTIALS.map(demo => (
-                            <button key={demo.role} onClick={() => fillDemo(demo)}
-                                className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 hover:bg-healix-teal/5 border border-slate-100 hover:border-healix-teal/20 rounded-xl transition-all group">
-                                <demo.icon className="w-4 h-4 text-slate-400 group-hover:text-healix-teal transition-colors" />
-                                <span className="text-[10px] font-black text-slate-500 group-hover:text-healix-teal uppercase tracking-wider transition-colors">{demo.label}</span>
-                            </button>
-                        ))}
-                    </div>
-                </motion.div>
-            )}
         </motion.div>
     );
 };
