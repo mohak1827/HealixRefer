@@ -1,0 +1,9 @@
+{
+    "name": "healix-refer-proxy",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "cd \"Build and Break\" && npm run dev",
+        "install:all": "cd \"Build and Break\" && npm run install:all"
+    }
+}
