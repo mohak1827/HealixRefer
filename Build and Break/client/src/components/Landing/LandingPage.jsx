@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 import Login from '../Auth/Login';
 
 const LandingPage = () => {
     const [showLogin, setShowLogin] = useState(false);
+    const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
     const [scrolled, setScrolled] = useState(false);
 
     useEffect(() => {
@@ -11,6 +13,11 @@ const LandingPage = () => {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    const openAuth = (mode) => {
+        setAuthMode(mode);
+        setShowLogin(true);
+    };
 
     if (showLogin) {
         return (
@@ -21,7 +28,7 @@ const LandingPage = () => {
                 >
                     ← Back to Home
                 </button>
-                <Login />
+                <Login initialIsLogin={authMode === 'login'} />
             </div>
         );
     }
@@ -35,11 +42,14 @@ const LandingPage = () => {
                         <div className="w-10 h-10 bg-medical-blue rounded-lg flex items-center justify-center text-white font-bold text-xl">R</div>
                         <span className="text-xl font-bold tracking-tight text-medical-dark">Rural<span className="text-medical-green">Health</span></span>
                     </div>
-                    <div className="hidden md:flex items-center gap-8">
+                    <div className="hidden md:flex items-center gap-6">
                         <a href="#features" className="text-sm font-medium text-gray-600 hover:text-medical-blue">How it Works</a>
                         <a href="#about" className="text-sm font-medium text-gray-600 hover:text-medical-blue">About</a>
-                        <button onClick={() => setShowLogin(true)} className="btn-secondary py-2 px-6 text-sm">
-                            Login
+                        <button onClick={() => openAuth('login')} className="text-sm font-bold text-healix-navy hover:text-healix-blue transition-colors">
+                            Sign In
+                        </button>
+                        <button onClick={() => openAuth('register')} className="bg-healix-navy text-white px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest hover:bg-healix-blue transition-all shadow-md">
+                            Register
                         </button>
                     </div>
                 </div>
@@ -64,11 +74,11 @@ const LandingPage = () => {
                             Empowering rural clinics with real-time hospital coordination, bed availability tracking, and AI-driven referral optimization.
                         </p>
                         <div className="flex flex-wrap gap-4">
-                            <button onClick={() => setShowLogin(true)} className="btn-primary flex items-center gap-2">
-                                🚨 Emergency Referral
+                            <button onClick={() => openAuth('register')} className="bg-healix-navy text-white px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-healix-blue transition-all shadow-xl flex items-center gap-2 group">
+                                Get Started <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
-                            <button onClick={() => setShowLogin(true)} className="btn-secondary flex items-center gap-2">
-                                🏥 Check Bed Availability
+                            <button onClick={() => openAuth('login')} className="bg-white text-healix-navy px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest border-2 border-slate-100 hover:border-healix-blue/20 transition-all shadow-sm">
+                                Clinical Sign In
                             </button>
                         </div>
                     </motion.div>

@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-    LayoutDashboard, FileText, Plus, Building2, Bed, AlertTriangle,
-    Truck, MapPin, Settings, LogOut, Heart, Stethoscope, User,
+    LayoutDashboard, FileText, Plus, Building2, Bed, AlertTriangle, Bell,
+    Truck, MapPin, Settings, LogOut, Heart, Stethoscope, User, Users,
     Activity, History, BarChart3, CheckCircle2, Globe, Shield, Cpu, TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -17,6 +17,10 @@ const MENU_CONFIG = {
     ],
     'Hospital Admin': [
         { id: 'dashboard', label: 'Hospital Overview', icon: LayoutDashboard },
+        { id: 'patients', label: 'Patient Records', icon: Users },
+        { id: 'doctors', label: 'Clinical Staff', icon: Stethoscope },
+        { id: 'capacity', label: 'Ward Capacity', icon: Bed },
+        { id: 'referrals', label: 'Referral Queue', icon: Bell },
     ],
     'Ambulance': [
         { id: 'dashboard', label: 'Ambulance Panel', icon: Truck },

@@ -3,48 +3,70 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
+const DEMO_USERS = [
+    { id: 'u1', name: 'Ramesh Kumar', email: 'patient@healix.ai', password: 'password123', role: 'Patient', village: 'Sehore', age: 45, contact: '9876543210' },
+    { id: 'u2', name: 'Dr. Arjun Sharma', email: 'doctor@healix.ai', password: 'password123', role: 'Doctor', phcName: 'Sehore PHC' },
+    { id: 'u3', name: 'Admin Priya Singh', email: 'admin@healix.ai', password: 'password123', role: 'Hospital Admin', hospitalId: 1 },
+];
+
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [token, setToken] = useState(localStorage.getItem('token'));
+    const [user, setUser] = useState(() => {
+        const savedUser = localStorage.getItem('user');
+        return savedUser ? JSON.parse(savedUser) : null;
+    });
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (token) {
-            localStorage.setItem('token', token);
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            fetchUser();
-        } else {
-            localStorage.removeItem('token');
-            delete axios.defaults.headers.common['Authorization'];
-            setUser(null);
-            setLoading(false);
+        const allUsers = localStorage.getItem('healix_all_users');
+        if (!allUsers) {
+            localStorage.setItem('healix_all_users', JSON.stringify(DEMO_USERS));
         }
-    }, [token]);
-
-    const fetchUser = async () => {
-        try {
-            const res = await axios.get('/api/auth/me');
-            setUser(res.data);
-        } catch (err) {
-            setToken(null);
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, []);
 
     const login = async (email, password) => {
-        const res = await axios.post('/api/auth/login', { email, password });
-        setToken(res.data.token);
-        setUser(res.data.user);
-        return res.data.user;
+        const allUsers = JSON.parse(localStorage.getItem('healix_all_users') || '[]');
+        const userMatch = allUsers.find(u => u.email === email && u.password === password);
+
+        if (!userMatch) {
+            throw new Error('Invalid credentials');
+        }
+
+        const sessionUser = { ...userMatch };
+        delete sessionUser.password;
+
+        setUser(sessionUser);
+        localStorage.setItem('user', JSON.stringify(sessionUser));
+        localStorage.setItem('token', 'local_sim_token_' + Date.now());
+        return sessionUser;
     };
 
     const register = async (name, email, password, role) => {
-        await axios.post('/api/auth/register', { name, email, password, role });
+        const allUsers = JSON.parse(localStorage.getItem('healix_all_users') || '[]');
+        if (allUsers.find(u => u.email === email)) {
+            throw new Error('User already exists');
+        }
+
+        const newUser = {
+            id: 'u' + Date.now(),
+            name, email, password, role,
+            hospitalId: role === 'Hospital Admin' ? 1 : null
+        };
+
+        allUsers.push(newUser);
+        localStorage.setItem('healix_all_users', JSON.stringify(allUsers));
+
+        const sessionUser = { ...newUser };
+        delete sessionUser.password;
+        setUser(sessionUser);
+        localStorage.setItem('user', JSON.stringify(sessionUser));
+        localStorage.setItem('token', 'local_sim_token_' + Date.now());
+        return sessionUser;
     };
 
     const logout = () => {
-        setToken(null);
+        setUser(null);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
     };
 
     return (

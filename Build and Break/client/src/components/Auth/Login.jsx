@@ -17,9 +17,9 @@ const DEMO_CREDENTIALS = [
     { role: 'Ambulance', email: 'ambulance@healix.ai', password: 'password123', icon: Truck, label: 'AMBULANCE' },
 ];
 
-const Login = () => {
+const Login = ({ initialIsLogin = true }) => {
     const { login, register } = useAuth();
-    const [isLogin, setIsLogin] = useState(true);
+    const [isLogin, setIsLogin] = useState(initialIsLogin);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');

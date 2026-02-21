@@ -9,6 +9,7 @@ import DoctorDashboard from './components/Dashboard/DoctorDashboard';
 import AdminDashboard from './components/Dashboard/AdminDashboard';
 import AmbulanceDashboard from './components/Dashboard/AmbulanceDashboard';
 import SuperAdminDashboard from './components/Dashboard/SuperAdminDashboard';
+import HospitalManagement from './components/Dashboard/HospitalManagement';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const DashboardContent = () => {
@@ -33,7 +34,7 @@ const DashboardContent = () => {
         switch (user.role) {
             case 'Patient': return <PatientDashboard />;
             case 'Doctor': return <DoctorDashboard activeView={activeTab === 'history' ? 'history' : 'create'} />;
-            case 'Hospital Admin': return <AdminDashboard />;
+            case 'Hospital Admin': return <HospitalManagement activeView={activeTab} setActiveTab={setActiveTab} />;
             case 'Ambulance': return <AmbulanceDashboard />;
             case 'Super Admin': return <SuperAdminDashboard />;
             default: return <PatientDashboard />;
