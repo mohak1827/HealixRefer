@@ -4,16 +4,23 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import LandingPage from './components/Landing/LandingPage';
 import Sidebar from './components/Layout/Sidebar';
-import PatientDashboard from './components/Dashboard/PatientDashboard';
 import DoctorDashboard from './components/Dashboard/DoctorDashboard';
 import AdminDashboard from './components/Dashboard/AdminDashboard';
 import AmbulancePage from './components/Ambulance/AmbulancePage';
 import SuperAdminDashboard from './components/Dashboard/SuperAdminDashboard';
 import { AnimatePresence, motion } from 'framer-motion';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import PatientDashboard from './patient/Dashboard';
+import AiAnalysis from './patient/AiAnalysis';
+import Referrals from './patient/Referrals';
+import MedicalVault from './patient/MedicalVault';
+import Appointments from './patient/Appointments';
+import Timeline from './patient/Timeline';
 
 const DashboardContent = () => {
     const { user, loading } = useAuth();
     const [activeTab, setActiveTab] = useState('dashboard');
+    const location = useLocation();
 
     if (loading) return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-white">
@@ -29,17 +36,6 @@ const DashboardContent = () => {
 
     if (!user) return <LandingPage />;
 
-    const renderDashboard = () => {
-        switch (user.role) {
-            case 'Patient': return <PatientDashboard />;
-            case 'Doctor': return <DoctorDashboard activeView={activeTab === 'history' ? 'history' : 'create'} />;
-            case 'Hospital Admin': return <AdminDashboard />;
-            case 'Ambulance': return <AmbulancePage activeView={activeTab === 'history' ? 'history' : activeTab === 'active' ? 'active' : 'dashboard'} />;
-            case 'Super Admin': return <SuperAdminDashboard />;
-            default: return <PatientDashboard />;
-        }
-    };
-
     return (
         <div className="min-h-screen bg-light-gradient flex selection:bg-healix-teal selection:text-white">
             <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -47,8 +43,37 @@ const DashboardContent = () => {
                 <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-healix-blue/[0.02] blur-[160px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2" />
                 <div className="fixed bottom-0 left-0 w-[800px] h-[800px] bg-medical-teal/[0.02] blur-[160px] rounded-full pointer-events-none translate-y-1/2 -translate-x-1/4" />
                 <AnimatePresence mode="wait">
-                    <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="relative z-10">
-                        {renderDashboard()}
+                    <motion.div
+                        key={user.role === 'Patient' ? location.pathname : activeTab}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        className="relative z-10"
+                    >
+                        <Routes>
+                            {user.role === 'Patient' ? (
+                                <>
+                                    <Route path="/patient/dashboard" element={<PatientDashboard />} />
+                                    <Route path="/patient/ai-analysis" element={<AiAnalysis />} />
+                                    <Route path="/patient/referrals" element={<Referrals />} />
+                                    <Route path="/patient/medical-vault" element={<MedicalVault />} />
+                                    <Route path="/patient/appointments" element={<Appointments />} />
+                                    <Route path="/patient/timeline" element={<Timeline />} />
+                                    <Route path="/patient/*" element={<Navigate to="/patient/dashboard" replace />} />
+                                    <Route path="/" element={<Navigate to="/patient/dashboard" replace />} />
+                                    <Route path="*" element={<Navigate to="/patient/dashboard" replace />} />
+                                </>
+                            ) : (
+                                <Route path="*" element={
+                                    user.role === 'Doctor' ? <DoctorDashboard activeView={activeTab === 'history' ? 'history' : 'create'} /> :
+                                        user.role === 'Hospital Admin' ? <AdminDashboard /> :
+                                            user.role === 'Ambulance' ? <AmbulancePage activeView={activeTab === 'history' ? 'history' : activeTab === 'active' ? 'active' : 'dashboard'} /> :
+                                                user.role === 'Super Admin' ? <SuperAdminDashboard /> :
+                                                    <div className="p-10 text-center text-gray-400">Section Under Development</div>
+                                } />
+                            )}
+                        </Routes>
                     </motion.div>
                 </AnimatePresence>
             </main>
@@ -59,7 +84,9 @@ const DashboardContent = () => {
 const App = () => (
     <NotificationProvider>
         <AuthProvider>
-            <DashboardContent />
+            <Router>
+                <DashboardContent />
+            </Router>
         </AuthProvider>
     </NotificationProvider>
 );

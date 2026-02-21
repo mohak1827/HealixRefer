@@ -16,40 +16,49 @@ const Notification = require('./models/Notification');
 const AmbulanceAssignment = require('./models/AmbulanceAssignment');
 const EscalationLog = require('./models/EscalationLog');
 const Patient = require('./models/Patient');
+const dbStore = require('./dbStore');
+
+// Centralized state aliases for backward compatibility within server.js
+let isDbConnected = false;
+const memUsers = dbStore.memUsers;
+const memHospitals = dbStore.memHospitals;
+const memReferrals = dbStore.memReferrals;
+const memReservations = dbStore.memReservations;
+const memNotifications = dbStore.memNotifications;
+const memEscalationLogs = dbStore.memEscalationLogs;
+const memAmbulanceAssignments = dbStore.memAmbulanceAssignments;
+const memPatients = dbStore.memPatients;
+const memAppointments = dbStore.memAppointments;
+const memTimelineEvents = dbStore.memTimelineEvents;
+const memMedicalFiles = dbStore.memMedicalFiles;
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+const patientRoutes = require('./routes/patientRoutes');
+app.use('/api/patient', patientRoutes);
 
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'healix_secret_2026';
 
 // ─── MongoDB Connection ───────────────────────────────────────────────────
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/healix';
-let isDbConnected = false;
-
 mongoose.connect(MONGODB_URI)
     .then(() => {
         console.log('✅ MongoDB Connected Successfully');
+        dbStore.isDbConnected = true;
         isDbConnected = true;
     })
     .catch(err => {
         console.error('⚠️ MongoDB Connection Failed:', err.message);
         console.warn('🚀 Starting in SIMULATION MODE (In-Memory Fallback Active)');
+        dbStore.isDbConnected = false;
         isDbConnected = false;
     });
-
-// Fallback In-Memory Stores
-const memUsers = [];
-const memHospitals = [];
-const memReferrals = [];
-const memReservations = [];
-const memNotifications = [];
-const memEscalationLogs = [];
-const memAmbulanceAssignments = [];
-const memPatients = [];
 
 // ─── Seed Demo Accounts ────────────────────────────────────────────────────
 const seedDemoAccounts = async () => {
@@ -63,8 +72,8 @@ const seedDemoAccounts = async () => {
         ];
 
         for (const demo of demoUsers) {
-            memUsers.push(demo);
-            if (isDbConnected) {
+            dbStore.memUsers.push(demo);
+            if (dbStore.isDbConnected) {
                 const exists = await User.findOne({ email: demo.email });
                 if (!exists) {
                     const hashedPassword = await bcrypt.hash(demo.password, 10);
@@ -86,12 +95,39 @@ const seedDemoAccounts = async () => {
         ];
 
         for (const hosp of initialHospitals) {
-            memHospitals.push(hosp);
-            if (isDbConnected) {
+            dbStore.memHospitals.push(hosp);
+            if (dbStore.isDbConnected) {
                 const exists = await Hospital.findOne({ id: hosp.id });
                 if (!exists) {
                     await new Hospital(hosp).save();
-                    console.log(`✅ Seeded hospital: ${hosp.name}`);
+                }
+            }
+        }
+
+        // Seed Patient record for demo patient
+        const demoEmail = 'patient@healix.ai';
+        const demoPatientUser = dbStore.isDbConnected ? await User.findOne({ email: demoEmail }) : dbStore.memUsers.find(u => u.email === demoEmail);
+
+        if (demoPatientUser) {
+            const userId = demoPatientUser.id || demoPatientUser._id;
+            const patientData = {
+                id: 'PAT001',
+                userId,
+                name: 'Ramesh Kumar',
+                age: 45,
+                village: 'Sehore',
+                contact: '9876543210'
+            };
+            if (dbStore.isDbConnected) {
+                const exists = await Patient.findOne({ userId });
+                if (!exists) {
+                    await new Patient(patientData).save();
+                    console.log('✅ Seeded demo patient record');
+                }
+            } else {
+                if (!dbStore.memPatients.find(p => p.userId === userId)) {
+                    dbStore.memPatients.push(patientData);
+                    console.log('✅ Seeded demo patient record (Mem)');
                 }
             }
         }
@@ -154,13 +190,13 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         let user;
-        if (isDbConnected) {
+        if (dbStore.isDbConnected) {
             user = await User.findOne({ email });
         } else {
-            user = memUsers.find(u => u.email === email);
+            user = dbStore.memUsers.find(u => u.email === email);
         }
 
-        if (!user || (isDbConnected ? !(await bcrypt.compare(password, user.password)) : password !== 'password123')) {
+        if (!user || (dbStore.isDbConnected ? !(await bcrypt.compare(password, user.password)) : password !== 'password123')) {
             console.warn('⚠️ Login failed: Invalid credentials for', email);
             return res.status(401).json({ message: "Invalid credentials" });
         }
@@ -195,7 +231,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/auth/me', authenticate, async (req, res) => {
     try {
         let user;
-        if (isDbConnected) {
+        if (dbStore.isDbConnected) {
             user = await User.findById(req.user.id).select('-password');
             if (!user) {
                 // Fallback: return decoded token data
@@ -518,83 +554,7 @@ function startGPSSimulation(assignmentId, fromLat, fromLng, toLat, toLng) {
 // ROUTES
 // ═══════════════════════════════════════════════════════════════════════════
 
-// ─── Patient Routes ─────────────────────────────────────────────────────────
-app.post('/api/patients/register', authenticate, requireRole('Patient'), async (req, res) => {
-    console.log('👤 /api/patients/register hit for user:', req.user.id);
-    try {
-        const { name, age, village, contact } = req.body;
-        if (!name || !age || !village || !contact) return res.status(400).json({ message: "All fields required" });
-
-        let patient = await Patient.findOne({ userId: req.user.id });
-        if (patient) {
-            patient.name = name;
-            patient.age = age;
-            patient.village = village;
-            patient.contact = contact;
-            await patient.save();
-            console.log('✅ Patient profile updated:', name);
-            return res.json({ success: true, patient, message: "Profile updated" });
-        }
-
-        const count = await Patient.countDocuments();
-        patient = new Patient({
-            id: `PAT${String(count + 1).padStart(3, '0')}`,
-            userId: req.user.id,
-            name, age, village, contact
-        });
-        await patient.save();
-        console.log('✅ New patient registered:', name);
-        res.json({ success: true, patient });
-    } catch (err) {
-        console.error('❌ Patient Register Error:', err.message);
-        res.status(500).json({ message: "Error saving patient profile" });
-    }
-});
-
-app.get('/api/patients/profile', authenticate, requireRole('Patient'), async (req, res) => {
-    try {
-        const patient = isDbConnected ? await Patient.findOne({ userId: req.user.id }) : memPatients.find(p => p.userId === req.user.id);
-        res.json(patient || null);
-    } catch (err) {
-        res.status(500).json({ message: "Error fetching profile" });
-    }
-});
-
-app.get('/api/patients/my-referral', authenticate, requireRole('Patient'), async (req, res) => {
-    try {
-        const patient = isDbConnected ? await Patient.findOne({ userId: req.user.id }) : memPatients.find(p => p.userId === req.user.id);
-        if (!patient) return res.json({ referrals: [], ambulance: null });
-
-        let myReferrals;
-        if (isDbConnected) {
-            myReferrals = await Referral.find({ $or: [{ patientId: patient.id }, { patientName: patient.name }] }).sort({ createdAt: -1 });
-        } else {
-            myReferrals = memReferrals.filter(r => r.patientId === patient.id || r.patientName === patient.name).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        }
-        const activeReferral = myReferrals.find(r => r.status !== 'Completed' && r.status !== 'Admitted') || myReferrals[0];
-
-        let ambulance = null;
-        let reservation = null;
-        let hospital = null;
-
-        if (activeReferral) {
-            if (isDbConnected) {
-                ambulance = await AmbulanceAssignment.findOne({ referralId: activeReferral.id });
-                reservation = await Reservation.findOne({ referralId: activeReferral.id });
-                hospital = await Hospital.findOne({ id: activeReferral.hospitalId });
-            } else {
-                ambulance = memAmbulanceAssignments.find(a => a.referralId === activeReferral.id);
-                reservation = memReservations.find(r => r.referralId === activeReferral.id);
-                hospital = memHospitals.find(h => h.id === activeReferral.hospitalId);
-            }
-        }
-
-        res.json({ referrals: myReferrals, activeReferral, ambulance, hospital, reservation });
-    } catch (err) {
-        console.error('❌ Patient My-Referral Error:', err.message);
-        res.status(500).json({ message: "Error fetching patient referrals" });
-    }
-});
+// Patient routes are now handled in routes/patientRoutes.js mounted at /api/patient
 
 
 // ─── Doctor Routes ──────────────────────────────────────────────────────────
