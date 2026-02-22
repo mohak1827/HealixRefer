@@ -6,6 +6,7 @@ const USERS_KEY = 'healix_users';
 const SESSION_KEY = 'healix_session';
 
 const DEMO_USERS = [
+    { id: 'demo_User', name: 'Ayush Singh', email: 'user@healix.ai', password: 'password123', role: 'User', location: 'Samrala' },
     { id: 'demo_Patient', name: 'Ramesh Kumar', email: 'patient@healix.ai', password: 'password123', role: 'Patient', village: 'Sehore', age: 45, contact: '9876543210' },
     { id: 'demo_Doctor', name: 'Dr. Arjun Sharma', email: 'doctor@healix.ai', password: 'password123', role: 'Doctor', phcName: 'Sehore PHC' },
     { id: 'demo_Hospital_Admin', name: 'Admin Priya Singh', email: 'admin@healix.ai', password: 'password123', role: 'Hospital Admin', hospitalId: 1 },

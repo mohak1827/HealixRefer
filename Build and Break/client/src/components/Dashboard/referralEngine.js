@@ -5,43 +5,82 @@
 // Scores hospitals by: location proximity, bed availability, ICU capacity,
 // doctor/specialist availability, equipment, and delay risk.
 
-// ─── MP Location Coordinates ────────────────────────────────────────────────
+import { mockHospitalsData } from '../../data/mockRuralData';
+
+// ─── Location Coordinates (Approximated for Punjab rural areas based on mockRuralData)
 const LOCATIONS = {
-    'Sehore': { lat: 23.2000, lng: 77.0860 },
-    'Bhopal': { lat: 23.2599, lng: 77.4126 },
-    'Indore': { lat: 22.7196, lng: 75.8577 },
-    'Raisen': { lat: 23.3300, lng: 77.7900 },
-    'Vidisha': { lat: 23.5251, lng: 77.8081 },
-    'Hoshangabad': { lat: 22.7467, lng: 77.7259 },
-    'Ashta': { lat: 23.0140, lng: 76.7260 },
-    'Budhni': { lat: 22.7925, lng: 77.6667 },
-    'Nasrullaganj': { lat: 22.9900, lng: 77.2700 },
-    'Ichhawar': { lat: 23.0085, lng: 77.0380 },
-    'Dewas': { lat: 22.9676, lng: 76.0534 },
-    'Ujjain': { lat: 23.1793, lng: 75.7849 },
-    'Jabalpur': { lat: 23.1815, lng: 79.9864 },
-    'Gwalior': { lat: 26.2183, lng: 78.1828 },
-    'Satna': { lat: 24.5804, lng: 80.8322 },
-    'Rewa': { lat: 24.5373, lng: 81.2989 },
-    'Shahdol': { lat: 23.2977, lng: 81.3570 },
-    'Mandla': { lat: 22.5980, lng: 80.3718 },
-    'Chhindwara': { lat: 22.0574, lng: 78.9382 },
-    'Betul': { lat: 21.9064, lng: 77.9022 },
+    "Samrala": { lat: 30.8385, lng: 76.1895 },
+    "Jagraon": { lat: 30.7812, lng: 75.4780 },
+    "Nabha": { lat: 30.3700, lng: 76.1480 },
+    "Rajpura": { lat: 30.4850, lng: 76.5950 },
+    "Khamano": { lat: 30.8250, lng: 76.3250 },
+    "Khanna": { lat: 30.7050, lng: 76.2250 },
+    "Doraha": { lat: 30.7980, lng: 76.0350 },
+    "Machiwara": { lat: 30.9180, lng: 76.2050 }
 };
 
 export const LOCATION_LIST = Object.keys(LOCATIONS).sort();
 
-// ─── Hospital Seed Data ─────────────────────────────────────────────────────
-const HOSPITALS = [
-    { id: 1, name: "City General Hospital", city: "Bhopal", lat: 23.2599, lng: 77.4126, totalBeds: 60, icuBeds: 8, availableBeds: 45, reservedBeds: 0, reservedICU: 0, specialists: ["Cardiologist", "Neurologist", "Orthopedic"], specialistSlots: { Cardiologist: 3, Neurologist: 2, Orthopedic: 2 }, ambulanceETA: 18, equipment: ["Ventilator", "ECG", "CT Scan", "MRI"], contact: "0755-2345678" },
-    { id: 2, name: "District Medical Center", city: "Indore", lat: 22.7196, lng: 75.8577, totalBeds: 40, icuBeds: 3, availableBeds: 30, reservedBeds: 0, reservedICU: 0, specialists: ["Orthopedic", "General Surgeon"], specialistSlots: { Orthopedic: 2, "General Surgeon": 1 }, ambulanceETA: 32, equipment: ["X-Ray", "ECG", "Ultrasound"], contact: "0731-9876543" },
-    { id: 3, name: "Rural Health Institute", city: "Sehore", lat: 23.2000, lng: 77.0860, totalBeds: 20, icuBeds: 2, availableBeds: 15, reservedBeds: 0, reservedICU: 0, specialists: ["General"], specialistSlots: { General: 3 }, ambulanceETA: 14, equipment: ["Basic", "X-Ray"], contact: "07562-234567" },
-    { id: 4, name: "St. Mary's Specialty Hospital", city: "Bhopal", lat: 23.2800, lng: 77.4350, totalBeds: 80, icuBeds: 12, availableBeds: 60, reservedBeds: 0, reservedICU: 0, specialists: ["Cardiologist", "Neurologist", "Orthopedic", "Pulmonologist"], specialistSlots: { Cardiologist: 4, Neurologist: 3, Orthopedic: 3, Pulmonologist: 2 }, ambulanceETA: 45, equipment: ["Ventilator", "MRI", "CT Scan", "ECG", "Dialysis"], contact: "0755-8765432" },
-    { id: 5, name: "Community Care Hospital", city: "Raisen", lat: 23.3300, lng: 77.7900, totalBeds: 35, icuBeds: 5, availableBeds: 25, reservedBeds: 0, reservedICU: 0, specialists: ["General", "Neurologist"], specialistSlots: { General: 2, Neurologist: 1 }, ambulanceETA: 27, equipment: ["ECG", "X-Ray", "Ventilator"], contact: "07482-345678" },
-    { id: 6, name: "Apollo Rural Clinic", city: "Vidisha", lat: 23.5251, lng: 77.8081, totalBeds: 50, icuBeds: 6, availableBeds: 38, reservedBeds: 0, reservedICU: 0, specialists: ["Cardiologist", "General Surgeon", "Pediatrician"], specialistSlots: { Cardiologist: 2, "General Surgeon": 2, Pediatrician: 3 }, ambulanceETA: 35, equipment: ["Ventilator", "ECG", "CT Scan", "Ultrasound"], contact: "07592-456789" },
-    { id: 7, name: "Lifeline Trauma Center", city: "Hoshangabad", lat: 22.7467, lng: 77.7259, totalBeds: 70, icuBeds: 10, availableBeds: 50, reservedBeds: 0, reservedICU: 0, specialists: ["Orthopedic", "Neurologist", "General Surgeon", "Anesthesiologist"], specialistSlots: { Orthopedic: 3, Neurologist: 2, "General Surgeon": 2, Anesthesiologist: 2 }, ambulanceETA: 50, equipment: ["Ventilator", "MRI", "CT Scan", "ECG", "X-Ray", "Dialysis"], contact: "07574-567890" },
-    { id: 8, name: "MP Institute of Medical Sciences", city: "Bhopal", lat: 23.2100, lng: 77.3900, totalBeds: 100, icuBeds: 15, availableBeds: 72, reservedBeds: 0, reservedICU: 0, specialists: ["Cardiologist", "Neurologist", "Orthopedic", "Pulmonologist", "Oncologist", "Nephrologist"], specialistSlots: { Cardiologist: 5, Neurologist: 4, Orthopedic: 3, Pulmonologist: 3, Oncologist: 2, Nephrologist: 2 }, ambulanceETA: 20, equipment: ["Ventilator", "MRI", "CT Scan", "ECG", "Dialysis", "ECMO", "Cathlab"], contact: "0755-1234567" },
-];
+const HOSPITALS_KEY = 'healix_hospitals_v3';
+
+export function getHospitals() {
+    let storedHospitals = null;
+    try {
+        const stored = localStorage.getItem(HOSPITALS_KEY);
+        if (stored) {
+            storedHospitals = JSON.parse(stored);
+        }
+    } catch (e) {
+        console.error("Error reading hospitals from local storage", e);
+    }
+
+    if (!storedHospitals || storedHospitals.length === 0) {
+        storedHospitals = [];
+        Object.keys(mockHospitalsData).forEach(location => {
+            const hotelsInLoc = mockHospitalsData[location].map(h => ({
+                ...h,
+                location: location,
+                availableBeds: h.bedsAvailable || 0,
+                totalBeds: (h.bedsAvailable || 0) + 10,
+                reservedBeds: 0,
+                icuBeds: 5,
+                reservedICU: 0
+            }));
+            storedHospitals = [...storedHospitals, ...hotelsInLoc];
+        });
+
+        try {
+            localStorage.setItem(HOSPITALS_KEY, JSON.stringify(storedHospitals));
+        } catch (e) {
+            console.error("Error saving initial hospitals to local storage", e);
+        }
+    }
+
+    // DEVELOPMENT OVERRIDE: Force Nabha beds to 0 for testing AI failovers
+    storedHospitals = storedHospitals.map(h => {
+        if (h.location === 'Nabha' || h.name.toLowerCase().includes('nabha') || h.name.toLowerCase().includes('sood') || h.name.toLowerCase().includes('singla')) {
+            return { ...h, bedsAvailable: 0, availableBeds: 0, icuBeds: 0 };
+        }
+        return h;
+    });
+
+    return storedHospitals;
+}
+
+export function updateHospitalBeds(hospitalId, needsICU) {
+    const hospitals = getHospitals();
+    const index = hospitals.findIndex(h => h.id === hospitalId);
+    if (index !== -1) {
+        if (hospitals[index].availableBeds > 0) {
+            hospitals[index].availableBeds -= 1;
+        }
+        if (needsICU && hospitals[index].icuBeds > 0) {
+            hospitals[index].icuBeds -= 1;
+        }
+        localStorage.setItem(HOSPITALS_KEY, JSON.stringify(hospitals));
+    }
+}
+
 
 // ─── Haversine Distance (km) ────────────────────────────────────────────────
 function haversineKm(lat1, lng1, lat2, lng2) {
@@ -130,93 +169,83 @@ function calculateSurvival(urgency, eta) {
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN — Suggest Hospitals (location-aware)
 // ═══════════════════════════════════════════════════════════════════════════
-export function suggestHospitals({ symptoms, urgency, specialistNeeded, needsICU, patientLocation }) {
-    const patientCoord = LOCATIONS[patientLocation] || LOCATIONS['Sehore'];
+export async function suggestHospitals({ symptoms, urgency, specialistNeeded, needsICU, patientLocation }) {
+    const patientCoord = LOCATIONS[patientLocation] || LOCATIONS['Samrala'];
+    const HOSPITALS = getHospitals();
 
-    const results = HOSPITALS
+    // Local preprocessing (distance, delay risk)
+    const localProcessed = HOSPITALS
         .filter(h => (h.availableBeds - h.reservedBeds) > 0)
         .map(h => {
-            let score = 100;
-            const reasons = [];
             const effectiveBeds = h.availableBeds - h.reservedBeds;
             const effectiveICU = h.icuBeds - h.reservedICU;
-
-            // Compute real distance from patient
             const distKm = haversineKm(patientCoord.lat, patientCoord.lng, h.lat, h.lng);
             const roundedDist = Math.round(distKm);
             const travelTime = Math.round(distKm * 1.4);
 
-            // Distance scoring (heavier weight for emergencies)
-            if (urgency === 'Emergency') {
-                score -= distKm * 1.8;
-                if (distKm <= 15) reasons.push(`Only ${roundedDist} km away`);
-            } else {
-                score -= distKm * 1.0;
-                if (distKm <= 25) reasons.push(`${roundedDist} km away`);
-            }
-
-            // ICU scoring
-            if (needsICU || urgency === 'Emergency') {
-                if (effectiveICU > 0) {
-                    score += 25;
-                    reasons.push(`ICU available (${effectiveICU} slots)`);
-                } else {
-                    score -= 40;
-                }
-            }
-
-            // Specialist scoring
-            if (specialistNeeded && h.specialists.includes(specialistNeeded)) {
-                const slots = h.specialistSlots?.[specialistNeeded] || 0;
-                if (slots > 0) {
-                    score += 30;
-                    reasons.push(`${specialistNeeded} available (${slots} slots)`);
-                } else {
-                    score += 10;
-                    reasons.push(`${specialistNeeded} on staff`);
-                }
-            } else if (specialistNeeded) {
-                score -= 25;
-            }
-
-            // Bed availability
-            const bedRatio = effectiveBeds / h.totalBeds;
-            if (bedRatio > 0.5) { score += 15; reasons.push(`${effectiveBeds} beds available`); }
-            else if (bedRatio > 0.2) { score += 5; reasons.push(`${effectiveBeds} beds available`); }
-            else { score -= 10; reasons.push(`Low bed availability (${effectiveBeds})`); }
-
-            // Equipment bonus
-            if (h.equipment.includes('Ventilator') && urgency === 'Emergency') {
-                score += 10;
-                reasons.push('Ventilator available');
-            }
-
-            // ETA bonus
-            if (travelTime <= 20) { score += 10; reasons.push(`ETA: ${travelTime} min`); }
-
             const delayRisk = calculateDelayRisk(h, urgency, distKm);
             const survivalChance = calculateSurvival(urgency, travelTime);
-            const reasonString = reasons.length > 0
-                ? `Selected because: ${reasons.join(' + ')}`
-                : 'General availability match';
 
             return {
                 ...h,
                 distance: roundedDist,
                 travelTime,
+                ambulanceETA: travelTime,
                 effectiveBeds,
                 effectiveICU,
-                score: Math.max(0, Math.round(score)),
-                survivalChance,
-                reasons,
-                reasonString,
                 delayRisk,
-                ambulanceETA: travelTime,
+                survivalChance
             };
-        })
-        .sort((a, b) => b.score - a.score);
+        });
 
-    return { suggestions: results, bestMatch: results[0] || null };
+    // Send payload to backend for Groq AI processing
+    try {
+        const payload = {
+            patient: { symptoms, urgency, specialistNeeded, needsICU },
+            hospitals: localProcessed
+        };
+
+        const response = await fetch('http://localhost:5000/api/ai/suggest-hospitals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error("AI Backend returned error");
+        const data = await response.json();
+
+        // Data format: { suggestions: [...], bestMatch: object }
+        // Let's ensure delayRisk and survivalChance (added in preprocessing) are maintained
+        const finalSuggestions = data.suggestions.map(aiSugg => {
+            const original = localProcessed.find(l => l.id === aiSugg.id) || {};
+            return {
+                ...original,
+                ...aiSugg
+            };
+        });
+
+        return { suggestions: finalSuggestions, bestMatch: finalSuggestions[0] || null };
+
+    } catch (error) {
+        console.error("AI Suggestion Error:", error);
+        // Fallback to purely local heuristic if AI fails
+        console.warn("Falling back to local heuristic due to API error.");
+
+        const fallbackResults = localProcessed.map(h => {
+            let score = 100;
+            if (urgency === 'Emergency') score -= h.distance * 1.8;
+            else score -= h.distance * 1.0;
+
+            if (needsICU && h.effectiveICU <= 0) score -= 40;
+            else if (h.effectiveICU > 0) score += 20;
+
+            if (specialistNeeded && h.specialists?.some(s => typeof s === 'string' ? s === specialistNeeded : s.role === specialistNeeded)) score += 30;
+
+            return { ...h, score: Math.round(score), reasonString: "Local heuristic fallback" };
+        }).sort((a, b) => b.score - a.score);
+
+        return { suggestions: fallbackResults, bestMatch: fallbackResults[0] || null };
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -284,6 +313,9 @@ export function createReferral({ form, hospital, severity, doctorName }) {
     referral.reservationId = reservationId;
     refs.push(referral);
     saveReferrals(refs);
+
+    // Persist bed changes to local storage
+    updateHospitalBeds(hospital.id, needsICU);
 
     return { referral, reservation };
 }

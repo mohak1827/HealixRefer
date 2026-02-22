@@ -7,34 +7,37 @@ export default {
     theme: {
         extend: {
             colors: {
-                'medical-green': '#16A34A',
-                'medical-blue': '#2563EB',
-                'medical-dark': '#111827',
-                'medical-gray': '#F3F4F6',
-                'medical-light': '#FFFFFF',
-                'medical-teal': '#0D9488',
-                'urgent-red': '#DC2626',
+                'medical-green': '#14B8A6', // Vibrant Teal
+                'medical-blue': '#3B82F6',
+                'medical-dark': '#0f172a', // Dark text color (slate-900)
+                'medical-gray': '#f8fafc', // Very light gray for subtle backgrounds
+                'medical-light': '#ffffff', // Pure white
+                'medical-teal': '#0f766e',
+                'urgent-red': '#ef4444',
                 'healix-blue': '#3B82F6',
-                'healix-navy': '#1E3A5F',
+                'healix-navy': '#1e293b',
                 'healix-teal': '#14B8A6',
+                'dark-surface': '#ffffff',
+                'dark-card': '#ffffff',
+                'dark-border': '#e2e8f0',
             },
             fontFamily: {
                 'sans': ['Poppins', 'Inter', 'sans-serif'],
                 'display': ['Poppins', 'sans-serif'],
             },
             boxShadow: {
-                'soft': '0 4px 20px 0 rgba(0, 0, 0, 0.05)',
-                'medical': '0 10px 30px -5px rgba(22, 163, 74, 0.1)',
+                'soft': '0 4px 20px 0 rgba(0, 0, 0, 0.3)',
+                'medical': '0 10px 30px -5px rgba(20, 184, 166, 0.15)',
+                'glow-teal': '0 0 25px rgba(20, 184, 166, 0.2)',
             },
             borderRadius: {
                 'medical': '12px',
             },
             backgroundImage: {
-                'light-gradient': 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 30%, #f0fdfa 70%, #f8fafc 100%)',
+                'dark-gradient': 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                'light-gradient': 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
             },
         },
     },
     plugins: [],
 }
-
-
