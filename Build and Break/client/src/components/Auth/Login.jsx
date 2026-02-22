@@ -11,16 +11,9 @@ const ROLES = [
     { value: 'Ambulance', label: 'Ambulance Driver', subtitle: 'Transport patients', icon: Truck, color: 'orange' },
 ];
 
-const DEMO_CREDENTIALS = [
-    { role: 'User', email: 'user@healix.ai', password: 'password123', icon: User, label: 'USER' },
-    { role: 'Patient', email: 'patient@healix.ai', password: 'password123', icon: Heart, label: 'PATIENT' },
-    { role: 'Doctor', email: 'doctor@healix.ai', password: 'password123', icon: Stethoscope, label: 'DOCTOR' },
-    { role: 'Hospital Admin', email: 'admin@healix.ai', password: 'password123', icon: Building2, label: 'HOSPITAL ADMIN' },
-    { role: 'Ambulance', email: 'ambulance@healix.ai', password: 'password123', icon: Truck, label: 'AMBULANCE' },
-];
 
 const Login = () => {
-    const { login, loginWithGoogle, register } = useAuth();
+    const { login, register } = useAuth();
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -30,30 +23,6 @@ const Login = () => {
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
-
-    const handleGoogleSignIn = async () => {
-        setError('');
-        setSuccess('');
-        setLoading(true);
-        try {
-            await loginWithGoogle();
-        } catch (err) {
-            setError(err.message || 'Google sign-in failed. Please try again.');
-        }
-        setLoading(false);
-    };
-
-    const handleGoogleSignUp = async () => {
-        setError('');
-        setSuccess('');
-        setLoading(true);
-        try {
-            await loginWithGoogle(role);
-        } catch (err) {
-            setError(err.message || 'Google sign-in failed. Please try again.');
-        }
-        setLoading(false);
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -69,16 +38,11 @@ const Login = () => {
                 setIsLogin(true);
             }
         } catch (err) {
-            setError(err.message || 'Login failed. Check your credentials.');
+            setError(err.message || 'Action failed. Please check your details.');
         }
         setLoading(false);
     };
 
-    const fillDemo = (demo) => {
-        setEmail(demo.email);
-        setPassword(demo.password);
-        setError('');
-    };
 
     const selectedRole = ROLES.find(r => r.value === role);
 
@@ -86,7 +50,7 @@ const Login = () => {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-md mx-auto min-h-screen flex flex-col justify-center py-12"
+            className="w-full max-w-md mx-auto min-h-screen flex flex-col justify-center py-12 px-4"
         >
             <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-2 mb-4">
@@ -121,7 +85,7 @@ const Login = () => {
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Full Name</label>
                                 <div className="relative">
                                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                    <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Enter your name"
+                                    <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Enter your name" required={!isLogin}
                                         className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-medical-dark placeholder:text-gray-400 focus:outline-none focus:border-healix-teal/50 focus:ring-2 focus:ring-healix-teal/20 transition-all" />
                                 </div>
                             </motion.div>
@@ -204,53 +168,8 @@ const Login = () => {
                         className="w-full py-4 bg-healix-teal text-white rounded-xl font-black text-sm tracking-wider flex items-center justify-center gap-2 hover:bg-teal-600 transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(20,184,166,0.3)]">
                         {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><ArrowRight className="w-4 h-4" /> {isLogin ? 'SIGN IN' : 'CREATE ACCOUNT'}</>}
                     </button>
-
-                    {isLogin && (
-                        <>
-                            <div className="relative py-2">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-gray-100" />
-                                </div>
-                                <div className="relative flex justify-center">
-                                    <span className="px-3 bg-white text-[10px] font-black tracking-widest text-slate-300">OR</span>
-                                </div>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={handleGoogleSignIn}
-                                disabled={loading}
-                                className="w-full py-4 bg-white border border-gray-200 rounded-xl font-black text-sm tracking-wider flex items-center justify-center gap-3 hover:border-healix-teal/40 hover:bg-teal-50/30 transition-all disabled:opacity-50"
-                            >
-                                <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05]" />
-                                CONTINUE WITH GOOGLE
-                            </button>
-                        </>
-                    )}
-
-                    {!isLogin && (
-                        <>
-                            <div className="relative py-2">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-gray-100" />
-                                </div>
-                                <div className="relative flex justify-center">
-                                    <span className="px-3 bg-white text-[10px] font-black tracking-widest text-slate-300">OR</span>
-                                </div>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={handleGoogleSignUp}
-                                disabled={loading}
-                                className="w-full py-4 bg-white border border-gray-200 rounded-xl font-black text-sm tracking-wider flex items-center justify-center gap-3 hover:border-healix-teal/40 hover:bg-teal-50/30 transition-all disabled:opacity-50"
-                            >
-                                <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05]" />
-                                SIGN UP WITH GOOGLE
-                            </button>
-                        </>
-                    )}
                 </form>
+
             </div>
 
         </motion.div>

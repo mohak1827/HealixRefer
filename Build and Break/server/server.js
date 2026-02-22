@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
+const Groq = require('groq-sdk');
 const mongoose = require('mongoose');
 
 // Import Models
@@ -16,6 +17,7 @@ const Notification = require('./models/Notification');
 const AmbulanceAssignment = require('./models/AmbulanceAssignment');
 const EscalationLog = require('./models/EscalationLog');
 const Patient = require('./models/Patient');
+const LabBooking = require('./models/LabBooking');
 const dbStore = require('./dbStore');
 
 // Centralized state aliases for backward compatibility within server.js
@@ -39,26 +41,87 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-const patientRoutes = require('./routes/patientRoutes');
-app.use('/api/patient', patientRoutes);
-
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'healix_secret_2026';
 
-// ─── MongoDB Connection ───────────────────────────────────────────────────
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/healix';
-mongoose.connect(MONGODB_URI)
-    .then(() => {
-        console.log('✅ MongoDB Connected Successfully');
-        dbStore.isDbConnected = true;
-        isDbConnected = true;
-    })
-    .catch(err => {
-        console.error('⚠️ MongoDB Connection Failed:', err.message);
-        console.warn('🚀 Starting in SIMULATION MODE (In-Memory Fallback Active)');
-        dbStore.isDbConnected = false;
-        isDbConnected = false;
-    });
+// ─── Auth Middleware ────────────────────────────────────────────────────────
+const authenticate = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ message: "Unauthorized" });
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (err) {
+        res.status(403).json({ message: "Invalid Token" });
+    }
+};
+
+const requireRole = (...roles) => (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+        return res.status(403).json({ message: `Access denied. Requires: ${roles.join(' or ')}` });
+    }
+    next();
+};
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+const patientRoutes = require('./routes/patientRoutes');
+app.use('/api/patient', patientRoutes);
+
+
+// -- LAB BOOKINGS ENDPOINT --
+app.post('/api/lab-bookings', authenticate, async (req, res) => {
+    try {
+        const { labId, labName, tests, totalCost } = req.body;
+        const newBooking = new LabBooking({
+            patientId: req.user.id,
+            patientName: req.user.name,
+            labId,
+            labName,
+            tests,
+            totalCost
+        });
+
+        if (dbStore.isDbConnected) {
+            await newBooking.save();
+        } else {
+            // In-memory fallback if needed
+            if (!dbStore.memLabBookings) dbStore.memLabBookings = [];
+            dbStore.memLabBookings.push(newBooking);
+        }
+        res.status(201).json({ success: true, booking: newBooking });
+    } catch (error) {
+        console.error("Lab Booking Error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// -- HISTORY ENDPOINT (Referrals + Lab Bookings) --
+app.get('/api/history', authenticate, async (req, res) => {
+    try {
+        let referrals = [];
+        let labBookings = [];
+
+        if (dbStore.isDbConnected) {
+            referrals = await Referral.find({ patientId: req.user.id }).sort({ createdAt: -1 });
+            labBookings = await LabBooking.find({ patientId: req.user.id }).sort({ createdAt: -1 });
+        } else {
+            referrals = dbStore.memReferrals.filter(r => r.patientId === req.user.id) || [];
+            labBookings = (dbStore.memLabBookings || []).filter(b => b.patientId === req.user.id);
+        }
+
+        res.status(200).json({
+            success: true,
+            referrals,
+            labBookings
+        });
+    } catch (error) {
+        console.error("History Fetch Error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 
 // ─── Seed Demo Accounts ────────────────────────────────────────────────────
 const seedDemoAccounts = async () => {
@@ -100,6 +163,7 @@ const seedDemoAccounts = async () => {
                 const exists = await Hospital.findOne({ id: hosp.id });
                 if (!exists) {
                     await new Hospital(hosp).save();
+                    console.log(`✅ Seeded hospital: ${hosp.name}`);
                 }
             }
         }
@@ -131,31 +195,29 @@ const seedDemoAccounts = async () => {
                 }
             }
         }
+        console.log('✅ Seeding complete');
     } catch (err) {
         console.error('❌ Error seeding data:', err.message);
     }
 };
-seedDemoAccounts();
 
-// ─── Auth Middleware ────────────────────────────────────────────────────────
-const authenticate = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ message: "Unauthorized" });
-    try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded;
-        next();
-    } catch (err) {
-        res.status(403).json({ message: "Invalid Token" });
-    }
-};
+// ─── MongoDB Connection ───────────────────────────────────────────────────
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/healix';
+mongoose.connect(MONGODB_URI)
+    .then(async () => {
+        console.log('✅ MongoDB Connected Successfully');
+        dbStore.isDbConnected = true;
+        isDbConnected = true;
+        await seedDemoAccounts();
+    })
+    .catch(async (err) => {
+        console.error('⚠️ MongoDB Connection Failed:', err.message);
+        console.warn('🚀 Starting in SIMULATION MODE (In-Memory Fallback Active)');
+        dbStore.isDbConnected = false;
+        isDbConnected = false;
+        await seedDemoAccounts();
+    });
 
-const requireRole = (...roles) => (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-        return res.status(403).json({ message: `Access denied. Requires: ${roles.join(' or ')}` });
-    }
-    next();
-};
 
 // ─── Auth Routes ────────────────────────────────────────────────────────────
 app.post('/api/auth/register', async (req, res) => {
@@ -232,7 +294,7 @@ app.get('/api/auth/me', authenticate, async (req, res) => {
     try {
         let user;
         if (dbStore.isDbConnected) {
-            user = await User.findById(req.user.id).select('-password');
+            user = await User.findOne({ id: req.user.id }).select('-password');
             if (!user) {
                 // Fallback: return decoded token data
                 return res.json({
@@ -470,13 +532,94 @@ async function aiSuggestHospital(symptoms, urgency, specialistNeeded, needsICU) 
 }
 
 function calculateSurvival(urgency, eta) {
-    if (urgency === "Normal") return Math.round((97 + Math.random() * 2) * 10) / 10;
-    const base = urgency === "Emergency" ? 95 : 97;
-    const decay = urgency === "Emergency" ? 0.05 : 0.02;
-    const thresh = urgency === "Emergency" ? 30 : 50;
-    const chance = base * (1 / (1 + Math.exp(decay * (eta - thresh))));
-    return Math.max(5, Math.round(chance * 10) / 10);
+    let base = urgency === 'Emergency' ? 85 : 95;
+    base -= Math.min(20, eta * 0.3);
+    return Math.max(60, Math.round(base + Math.random() * 5));
 }
+
+// ─── Groq Llama Provider for Hospital Suggestions ─────────────────────────────
+app.post('/api/ai/suggest-hospitals', async (req, res) => {
+    try {
+        const { patient, hospitals } = req.body;
+
+        if (!patient || !hospitals || !Array.isArray(hospitals)) {
+            return res.status(400).json({ message: "Invalid payload. 'patient' object and 'hospitals' array required." });
+        }
+
+        const prompt = `You are a medical triage AI. I will provide you with a patient case and a list of available hospitals.
+Your job is to rank the hospitals from best to worst fit and provide a VERY BRIEF explanation for each.
+
+PATIENT CASE:
+- Symptoms: ${patient.symptoms}
+- Urgency: ${patient.urgency}
+- Needs ICU: ${patient.needsICU ? 'Yes' : 'No'}
+- Specialist Needed: ${patient.specialistNeeded || 'Any'}
+
+AVAILABLE HOSPITALS (JSON):
+${JSON.stringify(hospitals.map(h => ({
+            id: h.id, name: h.name, distance: h.distance, travelTime: h.ambulanceETA,
+            effectiveBeds: h.effectiveBeds, effectiveICU: h.effectiveICU,
+            specialists: h.specialists, specialistSlots: h.specialistSlots
+        })), null, 2)}
+
+INSTRUCTIONS:
+Calculate a score (0 to 100) for each hospital.
+1. Start with 100.
+2. Deduct heavily for distance/travelTime if urgency is Emergency.
+3. If Needs ICU is Yes, and effectiveICU is 0, deduct at least 40 points or set score to 0.
+4. If Specialist is needed, add 20 points if available, deduct 20 if not. Add points for available slots.
+5. Add points for general bed availability.
+
+Format the output EXACTLY as a JSON array of objects. DO NOT output markdown blocks. JUST the JSON array.
+Object format: { "id": "hospital_id_string", "score": integer_score, "reasonString": "Brief explanation (less than 15 words) of why this score was given, highlighting key matching factors." }`;
+
+        const chatCompletion = await groq.chat.completions.create({
+            messages: [{ role: "user", content: prompt }],
+            model: "llama3-70b-8192",
+            temperature: 0.1,
+            response_format: { type: "json_object" }
+        });
+
+        const content = chatCompletion.choices[0]?.message?.content || "[]";
+
+        let aiResults = [];
+        try {
+            // Groq's json_object mode requires a root object. So we might need to parse it out.
+            const parsed = JSON.parse(content);
+            if (Array.isArray(parsed)) {
+                aiResults = parsed;
+            } else if (parsed.hospitals && Array.isArray(parsed.hospitals)) {
+                aiResults = parsed.hospitals;
+            } else if (parsed.results && Array.isArray(parsed.results)) {
+                aiResults = parsed.results;
+            } else {
+                aiResults = Object.values(parsed);
+                if (!Array.isArray(aiResults) || (aiResults.length > 0 && typeof aiResults[0] !== 'object')) {
+                    throw new Error("Could not extract array from Groq JSON response");
+                }
+            }
+        } catch (e) {
+            console.error("Failed to parse Groq response:", content);
+            return res.status(500).json({ message: "Failed to parse AI response" });
+        }
+
+        // Merge AI scores with original hospital data
+        const mergedHospitals = hospitals.map(h => {
+            // Ensure ID comparison works whether they are strings or numbers
+            const aiData = aiResults.find(r => String(r.id) === String(h.id));
+            if (aiData) {
+                return { ...h, score: aiData.score, reasonString: aiData.reasonString };
+            }
+            return { ...h, score: 0, reasonString: "AI did not evaluate this hospital." };
+        }).sort((a, b) => b.score - a.score);
+
+        res.json({ suggestions: mergedHospitals, bestMatch: mergedHospitals[0] });
+
+    } catch (err) {
+        console.error("Groq AI Error:", err.message);
+        res.status(500).json({ message: "AI execution failed", error: err.message });
+    }
+});
 
 // ─── Notification Helper ────────────────────────────────────────────────────
 async function addNotification(userId, role, title, message, type = 'info', referralId = null) {
@@ -1407,7 +1550,7 @@ app.get('/api/notifications', authenticate, async (req, res) => {
 app.put('/api/notifications/:id/read', authenticate, async (req, res) => {
     try {
         if (isDbConnected) {
-            await Notification.findByIdAndUpdate(req.params.id, { read: true });
+            await Notification.findOneAndUpdate({ id: req.params.id }, { read: true });
         } else {
             const notif = memNotifications.find(n => n.id === req.params.id);
             if (notif) notif.read = true;
@@ -1620,6 +1763,17 @@ app.post('/api/ai/classify-severity', authenticate, (req, res) => {
         res.status(500).json({ message: "Severity classification failed", error: err.message });
     }
 });
+
+// ─── Serve Static Assets in Production ──────────────────────────────────────
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '../client/dist')));
+    app.get('*', (req, res) => {
+        // Exclude /api routes from being handled by the frontend
+        if (!req.path.startsWith('/api')) {
+            res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+        }
+    });
+}
 
 // ─── Start Server ─────────────────────────────────────────────────────────
 app.listen(PORT, () => {

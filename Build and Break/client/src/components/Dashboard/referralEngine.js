@@ -205,7 +205,8 @@ export async function suggestHospitals({ symptoms, urgency, specialistNeeded, ne
             hospitals: localProcessed
         };
 
-        const response = await fetch('http://localhost:5000/api/ai/suggest-hospitals', {
+        const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/auth$/, '') || '';
+        const response = await fetch(`${baseUrl}/api/ai/suggest-hospitals`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
