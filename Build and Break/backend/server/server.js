@@ -1766,11 +1766,11 @@ app.post('/api/ai/classify-severity', authenticate, (req, res) => {
 
 // ─── Serve Static Assets in Production ──────────────────────────────────────
 if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../client/dist')));
+    app.use(express.static(path.join(__dirname, '../../frontend/client/dist')));
     app.get('*', (req, res) => {
         // Exclude /api routes from being handled by the frontend
         if (!req.path.startsWith('/api')) {
-            res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+            res.sendFile(path.join(__dirname, '../../frontend/client/dist/index.html'));
         }
     });
 }
