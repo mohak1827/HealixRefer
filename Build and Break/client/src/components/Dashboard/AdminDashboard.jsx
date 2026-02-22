@@ -358,16 +358,20 @@ const AdminDashboard = () => {
                                     <Stethoscope className="w-4 h-4 text-medical-blue" /> Specialized Professional availability
                                 </h4>
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                    {hospital?.specialists?.map(s => (
-                                        <div key={s} className="p-4 bg-white border border-medical-gray rounded-xl hover:border-medical-blue/30 transition-all flex flex-col justify-between h-24 shadow-soft">
-                                            <div className="text-xs font-bold text-medical-dark leading-tight">{s}</div>
-                                            <div className="flex items-center justify-between mt-auto">
-                                                <div className="text-[10px] font-bold text-medical-blue bg-blue-50 px-2 py-0.5 rounded">
-                                                    {hospital.specialistSlots?.[s] || 0} SLOTS
+                                    {hospital?.specialists?.map(s => {
+                                        const specName = typeof s === 'string' ? s : s.role;
+                                        const dispName = typeof s === 'string' ? s : `${s.name} (${s.role})`;
+                                        return (
+                                            <div key={specName} className="p-4 bg-white border border-medical-gray rounded-xl hover:border-medical-blue/30 transition-all flex flex-col justify-between h-24 shadow-soft">
+                                                <div className="text-xs font-bold text-medical-dark leading-tight">{dispName}</div>
+                                                <div className="flex items-center justify-between mt-auto">
+                                                    <div className="text-[10px] font-bold text-medical-blue bg-blue-50 px-2 py-0.5 rounded">
+                                                        {hospital.specialistSlots?.[specName] || 0} SLOTS
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
                             </div>
                         </div>

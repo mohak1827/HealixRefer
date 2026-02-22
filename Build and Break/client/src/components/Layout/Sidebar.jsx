@@ -4,7 +4,7 @@ import {
     LayoutDashboard, FileText, Plus, Building2, Bed, AlertTriangle,
     Truck, MapPin, Settings, LogOut, Heart, Stethoscope, User,
     Activity, History, BarChart3, CheckCircle2, Globe, Shield, Cpu, TrendingUp, Radio,
-    Brain, Calendar, FileBox, Clock
+    Brain, Calendar, FileBox, Clock, Bell
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -24,6 +24,10 @@ const MENU_CONFIG = {
     ],
     'Hospital Admin': [
         { id: 'dashboard', label: 'Hospital Overview', icon: LayoutDashboard },
+        { id: 'patients', label: 'Patient Records', icon: User },
+        { id: 'doctors', label: 'Clinical Staff', icon: Stethoscope },
+        { id: 'capacity', label: 'Ward Capacity', icon: Bed },
+        { id: 'referrals', label: 'Referral Queue', icon: Bell },
     ],
     'Ambulance': [
         { id: 'dashboard', label: 'Control Center', icon: Truck },
@@ -36,11 +40,11 @@ const MENU_CONFIG = {
 };
 
 const ROLE_STYLES = {
-    'Patient': { color: 'text-healix-teal', bg: 'bg-teal-50', icon: Heart, label: 'Patient Portal' },
-    'Doctor': { color: 'text-healix-blue', bg: 'bg-blue-50', icon: Stethoscope, label: 'Doctor Panel' },
-    'Hospital Admin': { color: 'text-healix-teal', bg: 'bg-teal-50', icon: Building2, label: 'Hospital Admin' },
-    'Ambulance': { color: 'text-healix-blue', bg: 'bg-blue-50', icon: Truck, label: 'Ambulance Control' },
-    'Super Admin': { color: 'text-healix-navy', bg: 'bg-slate-100', icon: Shield, label: 'Health Ministry' },
+    'Patient': { color: 'text-healix-teal', bg: 'bg-teal-900/30', icon: Heart, label: 'Patient Portal' },
+    'Doctor': { color: 'text-healix-blue', bg: 'bg-blue-900/30', icon: Stethoscope, label: 'Doctor Panel' },
+    'Hospital Admin': { color: 'text-healix-teal', bg: 'bg-teal-900/30', icon: Building2, label: 'Hospital Admin' },
+    'Ambulance': { color: 'text-healix-blue', bg: 'bg-blue-900/30', icon: Truck, label: 'Ambulance Control' },
+    'Super Admin': { color: 'text-gray-300', bg: 'bg-slate-800', icon: Shield, label: 'Health Ministry' },
 };
 
 const Sidebar = ({ activeTab, setActiveTab }) => {
@@ -54,15 +58,15 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
         <motion.aside
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            className="w-72 fixed left-0 top-0 h-full bg-white border-r border-medical-gray flex flex-col z-50 shadow-soft"
+            className="w-72 fixed left-0 top-0 h-full bg-white border-r border-gray-100 flex flex-col z-50 shadow-2xl"
         >
             {/* Brand */}
-            <div className="p-7 border-b border-medical-gray">
+            <div className="p-7 border-b border-gray-100">
                 <div className="flex items-center gap-3 mb-5">
-                    <div className="w-10 h-10 bg-healix-navy rounded-xl flex items-center justify-center text-white font-black text-xl">
+                    <div className="w-10 h-10 bg-healix-teal rounded-xl flex items-center justify-center text-white font-black text-xl">
                         H
                     </div>
-                    <span className="text-xl font-extrabold tracking-tight text-healix-navy">
+                    <span className="text-xl font-extrabold tracking-tight text-medical-dark">
                         Healix<span className="text-healix-teal">Refer</span>
                     </span>
                 </div>
@@ -80,17 +84,17 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                     const isActive = user?.role === 'Patient' ? location.pathname === item.path : activeTab === item.id;
                     const content = (
                         <>
-                            <item.icon className={`w-[20px] h-[20px] ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-healix-blue'} transition-colors`} />
+                            <item.icon className={`w-[20px] h-[20px] ${isActive ? 'text-healix-teal' : 'text-gray-400 group-hover:text-healix-teal'} transition-colors`} />
                             <span>{item.label}</span>
                             {isActive && (
-                                <motion.div layoutId="active-indicator" className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
+                                <motion.div layoutId="active-indicator" className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-healix-teal rounded-r-full" />
                             )}
                         </>
                     );
 
                     const className = `w-full flex items-center gap-3 px-4 py-3 rounded-medical text-sm font-semibold transition-all group relative ${isActive
-                        ? 'bg-healix-navy text-white shadow-soft'
-                        : 'text-gray-500 hover:text-healix-blue hover:bg-slate-50'
+                        ? 'bg-teal-50 text-healix-teal font-bold'
+                        : 'text-gray-500 hover:bg-gray-50 hover:text-healix-teal'
                         }`;
 
                     if (user?.role === 'Patient' && item.path) {
@@ -114,18 +118,18 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
             </nav>
 
             {/* User Info & Logout */}
-            <div className="p-5 border-t border-medical-gray">
+            <div className="p-5 border-t border-gray-100">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-healix-navy text-xs font-bold">
+                    <div className="w-9 h-9 bg-medical-gray rounded-full flex items-center justify-center text-medical-dark text-xs font-bold shadow-sm">
                         {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-healix-navy truncate">{user?.name}</div>
-                        <div className="text-[10px] text-gray-400 truncate">{user?.email}</div>
+                        <div className="text-sm font-bold text-medical-dark truncate">{user?.name}</div>
+                        <div className="text-[10px] text-gray-500 truncate">{user?.email}</div>
                     </div>
                 </div>
                 <button onClick={logout}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 rounded-medical text-xs font-bold text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all">
+                    className="w-full flex items-center gap-2 px-4 py-2.5 rounded-medical text-xs font-bold text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-100">
                     <LogOut className="w-4 h-4" /> Log Out
                 </button>
             </div>

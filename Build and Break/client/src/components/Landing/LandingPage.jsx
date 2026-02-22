@@ -1,169 +1,299 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import Login from '../Auth/Login';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MapPin, Building2, ChevronDown, CheckCircle2, Stethoscope, PhoneCall, Sparkles, Navigation, ArrowRight, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import PublicNavbar from '../Layout/PublicNavbar';
+import { useAuth } from '../../context/AuthContext';
+import { punjabRuralLocations, mockHospitalsData } from '../../data/mockRuralData';
+import { getAccurateDistance, calculateDistance } from '../../utils/distanceCalculator';
+
+const specialtyKeywords = {
+    "heart": "Cardiology",
+    "chest": "Cardiology",
+    "pain": "General Medicine",
+    "fever": "General Medicine",
+    "cold": "General Medicine",
+    "head": "Neurology",
+    "brain": "Neurology",
+    "bone": "Orthopedics",
+    "fracture": "Orthopedics",
+    "back": "Orthopedics",
+    "baby": "Pediatrics",
+    "child": "Pediatrics",
+    "pregnant": "Maternity",
+    "delivery": "Maternity",
+    "tooth": "Dentistry",
+    "teeth": "Dentistry",
+    "accident": "Trauma Care",
+    "cut": "Emergency",
+    "bleed": "Emergency",
+    "surgery": "General Surgery",
+    "stomach": "General Medicine",
+    "breathing": "Emergency"
+};
+
+
 
 const LandingPage = () => {
-    const [showLogin, setShowLogin] = useState(false);
+    const navigate = useNavigate();
+    const { user } = useAuth();
     const [scrolled, setScrolled] = useState(false);
+    const [selectedLocation, setSelectedLocation] = useState(''); // Force empty on load to show locating UI
+
+    // AI Disease States
+    const [diseaseInput, setDiseaseInput] = useState('');
+    const [suggestedHospital, setSuggestedHospital] = useState(null);
+    const [matchedSpecialty, setMatchedSpecialty] = useState('');
+    const [userLocationCoords, setUserLocationCoords] = useState(null);
 
     useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+        const handleScroll = () => {
+            const isScrolled = window.scrollY > 10;
+            if (isScrolled !== scrolled) {
+                setScrolled(isScrolled);
+            }
+        };
 
-    if (showLogin) {
-        return (
-            <div className="min-h-screen bg-medical-gray flex items-center justify-center p-6 relative">
-                <button
-                    onClick={() => setShowLogin(false)}
-                    className="absolute top-10 left-10 btn-outline z-50 py-2 px-6"
-                >
-                    ← Back to Home
-                </button>
-                <Login />
-            </div>
-        );
-    }
+        window.addEventListener('scroll', handleScroll);
+
+        // Initialize from localStorage if available, else wait for user selection
+        if (!selectedLocation && localStorage.getItem('healixLocation')) {
+            setSelectedLocation(localStorage.getItem('healixLocation'));
+        } else if (!selectedLocation) {
+            // Default to Samrala to avoid undefined state
+            setSelectedLocation("Samrala");
+            localStorage.setItem('healixLocation', "Samrala");
+        }
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [scrolled, selectedLocation]);
+
+    const currentHospitals = selectedLocation ? mockHospitalsData[selectedLocation] || [] : [];
+
+    const handleDiseaseAnalyze = () => {
+        if (!user) {
+            alert("Please log in to use the Healix AI Analyzer.");
+            navigate('/login');
+            return;
+        }
+        if (!diseaseInput || currentHospitals.length === 0) return;
+
+        const words = diseaseInput.toLowerCase().split(/[\s,.-]+/);
+        let foundSpecialty = "General Medicine"; // Default
+
+        for (const word of words) {
+            if (specialtyKeywords[word]) {
+                foundSpecialty = specialtyKeywords[word];
+                break;
+            }
+        }
+
+        setMatchedSpecialty(foundSpecialty);
+
+        let bestMatch = null;
+        let alternatives = [];
+
+        // GATHER COMPREHENSIVE GLOBAL DATASET
+        let allHospitalsGlobally = [];
+        Object.keys(mockHospitalsData).forEach(loc => {
+            const hospAtLoc = mockHospitalsData[loc].map(h => ({ ...h, originalLocation: loc }));
+            allHospitalsGlobally.push(...hospAtLoc);
+        });
+
+        // Calculate True Driving Distances for ALL hospitals globally using the active User Region
+        if (selectedLocation) {
+            allHospitalsGlobally = allHospitalsGlobally.map(h => {
+                const accurateDistanceString = getAccurateDistance(selectedLocation, h);
+                // Parse the numerical portion of the string ('52.4 km' -> 52.4) to allow for sorting
+                const numericDistance = parseFloat(accurateDistanceString.replace(/[^\d.-]/g, ''));
+
+                let score = numericDistance;
+
+                // Penalty for no beds (massive, but keeps it on the map as an alternative)
+                if (h.bedsAvailable === 0) {
+                    score += 100;
+                }
+
+                // Bonus for specialty match
+                if (h.specialties.includes(foundSpecialty)) {
+                    score -= 30; // Willing to drive up to 30km extra for the exact specialty
+                }
+
+                // Ultimate importance for Emergency
+                if ((foundSpecialty === "Emergency" || foundSpecialty === "Trauma Care") && h.specialties.includes("Emergency")) {
+                    score -= 40;
+                }
+
+                return {
+                    ...h,
+                    calculatedDistance: numericDistance,
+                    distance: accurateDistanceString, // Overwrite the mock distance with the highly accurate driving map distance
+                    recommendationScore: score
+                };
+            }).sort((a, b) => a.recommendationScore - b.recommendationScore);
+        } else {
+            allHospitalsGlobally = allHospitalsGlobally.sort((a, b) => b.rating - a.rating);
+        }
+
+        // 3. Extract Best Match and Top 10 Alternatives
+        bestMatch = allHospitalsGlobally[0];
+        // Ensure we don't try to slice more than what exists, but try for exactly 10
+        alternatives = allHospitalsGlobally.slice(1, 11);
+
+        navigate('/recommendation', {
+            state: {
+                bestMatch: bestMatch,
+                alternatives: alternatives,
+                matchedSpecialty: foundSpecialty,
+                selectedLocation: bestMatch?.originalLocation || selectedLocation || "Samrala"
+            }
+        });
+    };
 
     return (
-        <div className="bg-white min-h-screen font-sans">
+        <div className="bg-white min-h-screen font-sans overflow-x-hidden">
             {/* Navigation */}
-            <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${scrolled ? 'py-4 bg-white shadow-soft' : 'py-6 bg-transparent'}`}>
-                <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-medical-blue rounded-lg flex items-center justify-center text-white font-bold text-xl">R</div>
-                        <span className="text-xl font-bold tracking-tight text-medical-dark">Rural<span className="text-medical-green">Health</span></span>
-                    </div>
-                    <div className="hidden md:flex items-center gap-8">
-                        <a href="#features" className="text-sm font-medium text-gray-600 hover:text-medical-blue">How it Works</a>
-                        <a href="#about" className="text-sm font-medium text-gray-600 hover:text-medical-blue">About</a>
-                        <button onClick={() => setShowLogin(true)} className="btn-secondary py-2 px-6 text-sm">
-                            Login
-                        </button>
-                    </div>
-                </div>
-            </nav>
+            <PublicNavbar selectedLocation={selectedLocation} />
 
             {/* Hero Section */}
-            <section className="relative pt-44 pb-24 overflow-hidden">
-                <div className="absolute top-0 right-0 w-1/2 h-full bg-medical-gray/30 -z-10 rounded-l-[100px]" />
+            <section className="relative min-h-screen flex flex-col justify-center items-center overflow-hidden">
+                {/* Background Image & Overlay */}
+                <div className="absolute inset-0 z-0 bg-[#0c5a61]">
+                    <img
+                        src="https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=2070&auto=format&fit=crop"
+                        alt="Medical Background"
+                        className="w-full h-full object-cover opacity-60 mix-blend-overlay"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#0f766e]/40 via-[#0e7490]/60 to-[#0c4a6e]/90" />
+                    <div className="absolute inset-0 bg-[#065f46]/30 mix-blend-multiply" />
+                </div>
 
-                <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+                <div className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center text-center mt-16 md:mt-24">
+                    {/* Badge */}
                     <motion.div
-                        initial={{ opacity: 0, x: -30 }}
-                        animate={{ opacity: 1, x: 0 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
+                        className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-white/40 bg-white/10 backdrop-blur-md text-white/90 text-[11px] font-bold tracking-[0.2em] uppercase mb-8"
                     >
-                        <h1 className="text-5xl lg:text-6xl font-bold text-medical-dark leading-tight mb-6">
-                            Smart AI-Based <br />
-                            <span className="text-medical-green">Rural Healthcare</span> <br />
-                            Referral System
-                        </h1>
-                        <p className="text-xl text-gray-600 mb-10 leading-relaxed max-w-lg">
-                            Empowering rural clinics with real-time hospital coordination, bed availability tracking, and AI-driven referral optimization.
-                        </p>
-                        <div className="flex flex-wrap gap-4">
-                            <button onClick={() => setShowLogin(true)} className="btn-primary flex items-center gap-2">
-                                🚨 Emergency Referral
-                            </button>
-                            <button onClick={() => setShowLogin(true)} className="btn-secondary flex items-center gap-2">
-                                🏥 Check Bed Availability
-                            </button>
-                        </div>
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#14b8a6] opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#14b8a6]"></span>
+                        </span>
+                        Rural Healthcare Redefined
                     </motion.div>
 
+                    {/* Heading */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8 }}
-                        className="relative"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.1 }}
+                        className="mb-8"
                     >
-                        <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-                            <img
-                                src="https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=1200"
-                                alt="Modern Healthcare"
-                                className="w-full h-[500px] object-cover"
-                            />
-                        </div>
-                        {/* Status Card Overlay */}
-                        <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl border border-medical-gray max-w-[200px]">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-3 h-3 bg-medical-green rounded-full animate-pulse" />
-                                <span className="text-xs font-bold text-gray-400 uppercase">Live Capacity</span>
-                            </div>
-                            <div className="text-2xl font-bold text-medical-dark">124 Beds</div>
-                            <div className="text-xs text-medical-blue font-medium mt-1">Available across 5 hospitals</div>
-                        </div>
+                        <h1 className="text-[3.5rem] md:text-[5rem] font-extrabold text-white leading-[1.1] tracking-tight">
+                            The Best <br /> Healthcare <br />
+                            <span className="text-[#34d399] drop-shadow-lg">
+                                in {selectedLocation || "Khanna"}
+                            </span>
+                        </h1>
                     </motion.div>
+
+                    {/* Subtext */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                    >
+                        <p className="text-lg md:text-xl text-white/90 mb-12 leading-relaxed max-w-2xl font-medium mx-auto text-shadow-sm">
+                            Discover top-rated hospitals instantly. Tell us your symptoms below for an AI-powered smart hospital recommendation, or book diagnostic lab tests with ease.
+                        </p>
+                    </motion.div>
+
+                    {/* Search Bar */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.3 }}
+                        className="w-full max-w-xl bg-white p-2 rounded-full shadow-2xl flex items-center pr-2 pl-6 relative mx-auto"
+                    >
+                        <input
+                            type="text"
+                            placeholder="E.g., Chest pain, fever, fracture..."
+                            value={diseaseInput}
+                            onChange={(e) => setDiseaseInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleDiseaseAnalyze()}
+                            className="flex-1 outline-none py-4 bg-transparent text-gray-800 placeholder:text-gray-400 text-lg w-full font-medium"
+                        />
+                        <button
+                            onClick={handleDiseaseAnalyze}
+                            className="bg-healix-teal hover:bg-teal-600 text-white px-8 py-3.5 rounded-full font-bold flex items-center gap-2 transition-colors whitespace-nowrap tracking-wide"
+                        >
+                            <Sparkles size={18} /> ANALYZE
+                        </button>
+                    </motion.div>
+                </div>
+
+                {/* Bottom Left Watermark */}
+                <div className="absolute bottom-12 left-12 md:flex items-center gap-4 text-white/60 text-[10px] font-bold tracking-[0.2em] uppercase z-10 hidden">
+                    <div className="w-16 h-[1px] bg-white/40"></div>
+                    Smart Referral Infrastructure
                 </div>
             </section>
 
-            {/* Features Section */}
-            <section id="features" className="py-24 bg-medical-gray">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold text-medical-dark mb-4">Why Choose RuralHealth?</h2>
-                        <div className="w-20 h-1.5 bg-medical-green mx-auto rounded-full" />
+            <AnimatePresence>
+                {selectedLocation && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 40 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -40 }}
+                        transition={{ duration: 0.6 }}
+                        className="relative z-20"
+                    >
+
+
+
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Why Choose Us... */}
+            <section className="py-24 bg-white text-medical-dark relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-50 via-transparent to-transparent opacity-50 pointer-events-none" />
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
+                    <div className="text-center mb-20">
+                        <h2 className="text-4xl lg:text-5xl font-black mb-6">Why Choose HealixRefer?</h2>
+                        <p className="text-xl text-gray-600 max-w-2xl mx-auto">Providing advanced, technology-driven healthcare solutions tailored for rural environments.</p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
                         {[
-                            { icon: '⚡', title: 'Instant Referrals', desc: 'Securely transfer patient data to multi-specialty hospitals in seconds.' },
-                            { icon: '📍', title: 'GPS Tracking', desc: 'Real-time ambulance tracking to ensure timely arrival and patient safety.' },
-                            { icon: '🤖', title: 'AI Optimization', desc: 'Smarter hospital suggestions based on distance, equipment, and current load.' },
+                            { icon: '🏥', title: 'Specialized Care', desc: 'Direct access to multi-specialty and super-specialty hospitals without the city hassle.' },
+                            { icon: '💊', title: 'Affordable Tests', desc: 'Find local diagnostic centers with transparent pricing right on the portal.' },
+                            { icon: '🚑', title: 'Emergency Dispatch', desc: 'Seamless integration with local ambulance drivers for rapid patient transport.' },
                         ].map((f, i) => (
-                            <div key={i} className="medical-card p-8 bg-white">
-                                <div className="text-4xl mb-6">{f.icon}</div>
-                                <h3 className="text-xl font-bold text-medical-dark mb-3">{f.title}</h3>
-                                <p className="text-gray-600 leading-relaxed">{f.desc}</p>
-                            </div>
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: i * 0.2 }}
+                                className="bg-white shadow-soft p-10 rounded-[32px] border border-gray-100 hover:border-healix-teal hover:shadow-medical transition-all group"
+                            >
+                                <div className="text-5xl mb-6 bg-teal-50 w-20 h-20 flex items-center justify-center rounded-2xl group-hover:scale-110 transition-transform">{f.icon}</div>
+                                <h3 className="text-2xl font-bold text-medical-dark mb-4">{f.title}</h3>
+                                <p className="text-gray-600 leading-relaxed font-medium">{f.desc}</p>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Language Selection / Rural Friendly */}
-            <section className="py-20">
-                <div className="max-w-4xl mx-auto px-6 text-center">
-                    <div className="inline-block px-4 py-1.5 bg-green-50 text-medical-green rounded-full text-xs font-bold mb-6">
-                        RURAL-FRIENDLY INTERFACE
-                    </div>
-                    <h2 className="text-4xl font-bold text-medical-dark mb-8">Simple. Accessible. Multi-language.</h2>
-                    <p className="text-lg text-gray-600 mb-10">
-                        Designed for doctors and health workers in remote areas. Large icons, clear fonts, and support for local languages.
-                    </p>
-                    <div className="flex justify-center gap-4">
-                        {['English', 'हिन्दी', 'বাংলা', 'मराठी'].map((lang) => (
-                            <button key={lang} className="px-6 py-2 border border-medical-gray rounded-full text-sm font-semibold hover:border-medical-green hover:text-medical-green transition-colors">
-                                {lang}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </section>
+            {/* Removed AI Modal - now redirects to /recommendation route */}
 
-            {/* Footer */}
-            <footer className="py-12 border-t border-medical-gray bg-white">
-                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-medical-blue rounded-lg flex items-center justify-center text-white font-bold">R</div>
-                        <span className="text-lg font-bold text-medical-dark">Rural<span className="text-medical-green">Health</span></span>
-                    </div>
-                    <div className="flex gap-8 text-sm font-medium text-gray-500">
-                        <a href="#" className="hover:text-medical-blue">Emergency</a>
-                        <a href="#" className="hover:text-medical-blue">Hospitals</a>
-                        <a href="#" className="hover:text-medical-blue">Ambulance</a>
-                        <a href="#" className="hover:text-medical-blue">Privacy Policy</a>
-                    </div>
-                    <div className="text-sm text-gray-400">
-                        © 2026 Rural Healthcare System. All rights reserved.
-                    </div>
-                </div>
-            </footer>
         </div>
     );
 };
 
 export default LandingPage;
-

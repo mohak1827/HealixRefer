@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Activity, ArrowRight, Bell } from 'lucide-react';
+import { Heart, User, Phone, Mail, MapPin, Calendar, Droplets, Activity, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import patientService from './services/patientService';
-import RiskScore from './components/RiskScore';
-import SummaryCard from './components/SummaryCard';
-import QuickActions from './components/QuickActions';
-import ActiveReferral from './components/ActiveReferral';
 
 const Dashboard = () => {
     const { user, updateUser } = useAuth();
-    const [data, setData] = useState({ profile: user, riskScore: 25, activeReferral: null });
+    const [data, setData] = useState({
+        profile: {
+            ...user,
+            gender: 'Male',
+            bloodGroup: 'O+',
+            email: user?.email || 'patient@healix.com',
+            address: '123 Rural Road, Health Village, State',
+            doctor: {
+                name: 'Dr. Arjun Mehta',
+                phone: '+919876543210'
+            }
+        },
+        riskScore: 25
+    });
     const [loading, setLoading] = useState(true);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editData, setEditData] = useState({ name: '', age: '', village: '', contact: '' });
@@ -24,13 +33,20 @@ const Dashboard = () => {
     const fetchData = async () => {
         try {
             const summary = await patientService.getHealthSummary();
-            const referralData = await patientService.getMyReferrals();
 
-            setData({
-                profile: (summary.profile && Object.keys(summary.profile).length > 0) ? summary.profile : user,
-                riskScore: summary.riskScore || 25,
-                activeReferral: referralData.activeReferral || (referralData.referrals?.length > 0 ? referralData.referrals[0] : null)
-            });
+            setData(prev => ({
+                ...prev,
+                profile: {
+                    ...prev.profile,
+                    ...(summary.profile || user),
+                    gender: summary.profile?.gender || prev.profile.gender,
+                    bloodGroup: summary.profile?.bloodGroup || prev.profile.bloodGroup,
+                    email: summary.profile?.email || prev.profile.email,
+                    address: summary.profile?.address || prev.profile.address,
+                    doctor: summary.profile?.doctor || prev.profile.doctor
+                },
+                riskScore: summary.riskScore || 25
+            }));
             setEditData({
                 name: (summary.profile?.name || user?.name) || '',
                 age: (summary.profile?.age || user?.age) || '',
@@ -39,8 +55,7 @@ const Dashboard = () => {
             });
         } catch (err) {
             console.error('Fetch error:', err);
-            // Even if fetch fails, ensure profile is set to user info
-            setData(prev => ({ ...prev, profile: user }));
+            setData(prev => ({ ...prev, profile: { ...prev.profile, ...user } }));
         } finally {
             setLoading(false);
         }
@@ -68,57 +83,100 @@ const Dashboard = () => {
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-7xl mx-auto space-y-10 pb-20"
+            className="w-full space-y-8"
         >
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            {/* Header Area */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-2">
                 <div className="flex items-center gap-5">
-                    <div className="w-16 h-16 bg-medical-green rounded-2xl flex items-center justify-center text-white shadow-lg ring-4 ring-medical-green/10">
+                    <div className="w-16 h-16 bg-healix-blue/10 rounded-2xl flex items-center justify-center text-healix-blue shadow-medical ring-4 ring-healix-blue/5">
                         <Heart className="w-9 h-9" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-medical-dark tracking-tight">Patient Overview</h1>
-                        <p className="text-gray-400 font-medium text-sm mt-1">
-                            Welcome back, <span className="text-medical-blue font-bold">{data.profile?.name || user?.name}</span>. Your health data is up to date.
+                        <h1 className="text-2xl font-bold text-medical-dark tracking-tight">Patient Overview</h1>
+                        <p className="text-gray-400 font-medium text-sm flex items-center gap-2">
+                            Welcome, <span className="text-healix-blue font-bold">{data.profile?.name}</span>
                         </p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="bg-white p-3 rounded-2xl border border-medical-gray shadow-soft relative cursor-pointer hover:shadow-medical transition-all">
-                        <Bell className="w-5 h-5 text-gray-400" />
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                <div className="flex items-center gap-4">
+                    <div className="relative cursor-pointer group">
+                        <div className="bg-white p-3 rounded-xl border border-medical-gray shadow-soft group-hover:shadow-medical transition-all">
+                            <Bell className="w-5 h-5 text-gray-400 group-hover:text-healix-blue" />
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white" />
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Left Column (4/12) */}
-                <div className="lg:col-span-4 space-y-8">
-                    <SummaryCard user={data.profile} onEdit={() => setShowEditModal(true)} />
-                    <RiskScore score={data.riskScore} />
-                </div>
-
-                {/* Right Column (8/12) */}
-                <div className="lg:col-span-8 space-y-8">
-                    <section>
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xs font-bold text-medical-dark uppercase tracking-widest flex items-center gap-2">
-                                <Activity className="w-5 h-5 text-medical-blue" /> Quick Navigation
-                            </h3>
+            {/* Profile Section */}
+            <div className="medical-card p-8">
+                <div className="flex flex-col md:flex-row gap-10">
+                    {/* Photo & Main Info */}
+                    <div className="flex flex-col items-center text-center space-y-4">
+                        <div className="w-32 h-32 bg-healix-blue/10 rounded-[40px] flex items-center justify-center text-healix-blue ring-8 ring-healix-blue/5 shadow-inner">
+                            <User className="w-16 h-16" />
                         </div>
-                        <QuickActions />
-                    </section>
-
-                    <section>
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xs font-bold text-medical-dark uppercase tracking-widest flex items-center gap-2">
-                                <ArrowRight className="w-5 h-5 text-medical-blue" /> Active Care Status
-                            </h3>
+                        <div>
+                            <h2 className="text-xl font-bold text-medical-dark">{data.profile?.name}</h2>
+                            <p className="text-sm font-bold text-healix-teal uppercase tracking-widest mt-1">Patient ID: PR-2024-089</p>
                         </div>
-                        <ActiveReferral referral={data.activeReferral} />
-                    </section>
+                        {data.profile?.doctor ? (
+                            <a
+                                href={`tel:${data.profile.doctor.phone}`}
+                                className="flex items-center gap-2 px-6 py-3 bg-medical-green text-white rounded-2xl font-bold shadow-lg shadow-medical-green/20 hover:scale-105 transition-all group active:scale-95"
+                            >
+                                <Phone className="w-4 h-4 group-hover:animate-bounce" />
+                                Call Doctor
+                            </a>
+                        ) : (
+                            <button disabled className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-400 rounded-2xl font-bold cursor-not-allowed">
+                                <Phone className="w-4 h-4" />
+                                No Doctor Assigned
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Details Grid */}
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                <Calendar className="w-3 h-3" /> Age
+                            </p>
+                            <p className="text-sm font-bold text-medical-dark bg-gray-50 px-4 py-2 rounded-xl">{data.profile?.age} Years</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                <Activity className="w-3 h-3" /> Gender
+                            </p>
+                            <p className="text-sm font-bold text-medical-dark bg-gray-50 px-4 py-2 rounded-xl">{data.profile?.gender}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                <Droplets className="w-3 h-3" /> Blood Group
+                            </p>
+                            <p className="text-sm font-bold text-medical-dark bg-gray-50 px-4 py-2 rounded-xl">{data.profile?.bloodGroup}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                <Phone className="w-3 h-3" /> Contact
+                            </p>
+                            <p className="text-sm font-bold text-medical-dark bg-gray-50 px-4 py-2 rounded-xl">{data.profile?.contact}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                <Mail className="w-3 h-3" /> Email
+                            </p>
+                            <p className="text-sm font-bold text-medical-dark bg-gray-50 px-4 py-2 rounded-xl truncate">{data.profile?.email}</p>
+                        </div>
+                        <div className="space-y-1 sm:col-span-2 lg:col-span-1">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                <MapPin className="w-3 h-3" /> Address
+                            </p>
+                            <p className="text-sm font-bold text-medical-dark bg-gray-50 px-4 py-2 rounded-xl">{data.profile?.address || data.profile?.village}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 

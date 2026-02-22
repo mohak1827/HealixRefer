@@ -6,7 +6,7 @@
 
 @layer base {
   body {
-    @apply bg-white text-medical-dark;
+    @apply text-medical-dark bg-white;
     font-family: 'Poppins', 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -14,41 +14,40 @@
 
 @layer components {
   .medical-card {
-    @apply bg-white rounded-medical border border-medical-gray transition-all duration-300 relative overflow-hidden;
-    box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+    @apply bg-white rounded-medical shadow-soft border border-gray-100 transition-all duration-300 relative overflow-hidden;
   }
 
   .medical-card:hover {
-    @apply shadow-medical -translate-y-1 border-medical-green/20;
+    @apply border-medical-green shadow-medical -translate-y-1;
   }
 
   .btn-primary {
-    @apply bg-medical-green text-white px-8 py-3 rounded-medical font-semibold transition-all duration-200 active:scale-95 shadow-soft;
+    @apply bg-medical-green text-white px-8 py-3 rounded-medical font-semibold transition-all duration-200 active:scale-95;
+    box-shadow: 0 0 20px rgba(20, 184, 166, 0.3);
   }
 
   .btn-primary:hover {
-    @apply bg-green-700 shadow-medical;
+    @apply bg-teal-600;
+    box-shadow: 0 0 30px rgba(20, 184, 166, 0.4);
   }
 
   .btn-secondary {
-    @apply bg-medical-blue text-white px-8 py-3 rounded-medical font-semibold transition-all duration-200 active:scale-95 shadow-soft;
+    @apply bg-medical-blue text-white px-8 py-3 rounded-medical font-semibold transition-all duration-200 active:scale-95;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
   }
 
   .btn-secondary:hover {
-    @apply bg-blue-700 shadow-soft;
+    @apply bg-blue-600;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
   }
 
   .btn-outline {
-    @apply border-2 border-medical-gray text-medical-dark px-8 py-3 rounded-medical font-semibold transition-all duration-200 hover:border-medical-blue hover:text-medical-blue active:scale-95;
+    @apply border-2 border-medical-gray text-medical-dark px-8 py-3 rounded-medical font-semibold transition-all duration-200 active:scale-95 hover:border-medical-green hover:text-medical-green;
   }
 
   .label-status {
     @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider;
   }
-}
-
-.bg-surface {
-  @apply bg-medical-gray;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
@@ -61,5 +60,5 @@
 }
 
 ::selection {
-  @apply bg-green-100 text-green-800;
+  @apply bg-medical-green text-white;
 }

@@ -36,7 +36,7 @@ const DoctorDashboard = ({ activeView }) => {
     useEffect(() => { setView(activeView === 'history' ? 'history' : 'create'); }, [activeView]);
     useEffect(() => { setReferrals(getReferrals()); }, []);
 
-    const handleGenerateAI = () => {
+    const handleGenerateAI = async () => {
         if (!form.patientName || !form.symptoms) {
             notify('Please fill patient name and symptoms', 'error');
             return;
@@ -47,9 +47,8 @@ const DoctorDashboard = ({ activeView }) => {
         }
         setLoading(true);
 
-        // Small timeout to show loading animation
-        setTimeout(() => {
-            const result = suggestHospitals({
+        try {
+            const result = await suggestHospitals({
                 symptoms: form.symptoms,
                 urgency: form.urgency,
                 specialistNeeded: form.specialistNeeded,
@@ -62,9 +61,14 @@ const DoctorDashboard = ({ activeView }) => {
             setSeverityResult(severity);
             if (result.bestMatch) setSelectedHospital(result.bestMatch);
             setStep(2);
+        } catch (error) {
+            notify('Failed to generate AI suggestions', 'error');
+            console.error(error);
+        } finally {
             setLoading(false);
-        }, 800);
+        }
     };
+
 
     const handleConfirmReferral = () => {
         if (!selectedHospital) return;
@@ -400,11 +404,15 @@ const DoctorDashboard = ({ activeView }) => {
 
                                         {/* Available specialists */}
                                         <div className="flex flex-wrap gap-2 mb-4">
-                                            {selectedHospital.specialists?.map(s => (
-                                                <span key={s} className={`px-4 py-1.5 rounded-full text-[11px] font-bold transition-all ${s === form.specialistNeeded ? 'bg-medical-blue text-white shadow-soft' : 'bg-medical-gray text-gray-500 border border-gray-200'}`}>
-                                                    {s} {selectedHospital.specialistSlots?.[s] ? `(${selectedHospital.specialistSlots[s]} avail)` : ''}
-                                                </span>
-                                            ))}
+                                            {selectedHospital.specialists?.map(s => {
+                                                const specName = typeof s === 'string' ? s : s.role;
+                                                const dispName = typeof s === 'string' ? s : `${s.name} (${s.role})`;
+                                                return (
+                                                    <span key={specName} className={`px-4 py-1.5 rounded-full text-[11px] font-bold transition-all ${specName === form.specialistNeeded ? 'bg-medical-blue text-white shadow-soft' : 'bg-medical-gray text-gray-500 border border-gray-200'}`}>
+                                                        {dispName} {selectedHospital.specialistSlots?.[specName] ? `(${selectedHospital.specialistSlots[specName]} avail)` : ''}
+                                                    </span>
+                                                )
+                                            })}
                                         </div>
 
                                         {/* Equipment */}
