@@ -106,36 +106,38 @@ const DashboardLayout = () => {
 const AppContent = () => {
     const { user, loading } = useAuth();
 
-    if (loading) return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-            <div className="relative mb-8">
-                <div className="w-24 h-24 border-2 border-healix-blue/10 border-t-healix-blue rounded-[32px] animate-spin" style={{ animationDuration: '1.5s' }} />
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-4 h-4 bg-healix-blue rounded-full animate-pulse shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
-                </div>
-            </div>
-            <p className="text-[10px] font-black text-healix-navy uppercase tracking-[0.4em] animate-pulse">Initializing Healix Intelligence</p>
-        </div>
-    );
-
     return (
-        <Routes>
-            {/* Public routes */}
-            <Route path="/" element={user && user.role !== 'User' ? <Navigate to={getDashboardRoute(user.role)} replace /> : <LandingPage />} />
-            <Route path="/login" element={user ? <Navigate to={getDashboardRoute(user.role)} replace /> : <LoginPage />} />
-            <Route path="/hospitals" element={<HospitalDirectory />} />
-            <Route path="/labs" element={<LabDirectory />} />
-            <Route path="/lab/:id" element={<LabDetails />} />
-            <Route path="/history" element={<PublicHistory />} />
-            <Route path="/recommendation" element={<PatientRecommendation />} />
+        <>
+            {loading && (
+                <div className="fixed inset-0 z-[9999] min-h-screen flex flex-col items-center justify-center bg-white">
+                    <div className="relative mb-8">
+                        <div className="w-24 h-24 border-2 border-healix-blue/10 border-t-healix-blue rounded-[32px] animate-spin" style={{ animationDuration: '1.5s' }} />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-4 h-4 bg-healix-blue rounded-full animate-pulse shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
+                        </div>
+                    </div>
+                    <p className="text-[10px] font-black text-healix-navy uppercase tracking-[0.4em] animate-pulse">Initializing Healix Intelligence</p>
+                </div>
+            )}
 
-            {/* Authenticated dashboard routes */}
-            <Route path="/patient/*" element={<DashboardLayout />} />
-            <Route path="/dashboard" element={<DashboardLayout />} />
+            <Routes>
+                {/* Public routes */}
+                <Route path="/" element={user && user.role !== 'User' ? <Navigate to={getDashboardRoute(user.role)} replace /> : <LandingPage />} />
+                <Route path="/login" element={user ? <Navigate to={getDashboardRoute(user.role)} replace /> : <LoginPage />} />
+                <Route path="/hospitals" element={<HospitalDirectory />} />
+                <Route path="/labs" element={<LabDirectory />} />
+                <Route path="/lab/:id" element={<LabDetails />} />
+                <Route path="/history" element={<PublicHistory />} />
+                <Route path="/recommendation" element={<PatientRecommendation />} />
 
-            {/* Catch-all: redirect to homepage */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+                {/* Authenticated dashboard routes */}
+                <Route path="/patient/*" element={<DashboardLayout />} />
+                <Route path="/dashboard" element={<DashboardLayout />} />
+
+                {/* Catch-all: redirect to homepage */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </>
     );
 };
 

@@ -20,7 +20,7 @@ const DEMO_CREDENTIALS = [
 ];
 
 const Login = () => {
-    const { login, register } = useAuth();
+    const { login, loginWithGoogle, register } = useAuth();
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -30,6 +30,30 @@ const Login = () => {
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+
+    const handleGoogleSignIn = async () => {
+        setError('');
+        setSuccess('');
+        setLoading(true);
+        try {
+            await loginWithGoogle();
+        } catch (err) {
+            setError(err.message || 'Google sign-in failed. Please try again.');
+        }
+        setLoading(false);
+    };
+
+    const handleGoogleSignUp = async () => {
+        setError('');
+        setSuccess('');
+        setLoading(true);
+        try {
+            await loginWithGoogle(role);
+        } catch (err) {
+            setError(err.message || 'Google sign-in failed. Please try again.');
+        }
+        setLoading(false);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -180,6 +204,52 @@ const Login = () => {
                         className="w-full py-4 bg-healix-teal text-white rounded-xl font-black text-sm tracking-wider flex items-center justify-center gap-2 hover:bg-teal-600 transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(20,184,166,0.3)]">
                         {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><ArrowRight className="w-4 h-4" /> {isLogin ? 'SIGN IN' : 'CREATE ACCOUNT'}</>}
                     </button>
+
+                    {isLogin && (
+                        <>
+                            <div className="relative py-2">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-gray-100" />
+                                </div>
+                                <div className="relative flex justify-center">
+                                    <span className="px-3 bg-white text-[10px] font-black tracking-widest text-slate-300">OR</span>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleGoogleSignIn}
+                                disabled={loading}
+                                className="w-full py-4 bg-white border border-gray-200 rounded-xl font-black text-sm tracking-wider flex items-center justify-center gap-3 hover:border-healix-teal/40 hover:bg-teal-50/30 transition-all disabled:opacity-50"
+                            >
+                                <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05]" />
+                                CONTINUE WITH GOOGLE
+                            </button>
+                        </>
+                    )}
+
+                    {!isLogin && (
+                        <>
+                            <div className="relative py-2">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-gray-100" />
+                                </div>
+                                <div className="relative flex justify-center">
+                                    <span className="px-3 bg-white text-[10px] font-black tracking-widest text-slate-300">OR</span>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleGoogleSignUp}
+                                disabled={loading}
+                                className="w-full py-4 bg-white border border-gray-200 rounded-xl font-black text-sm tracking-wider flex items-center justify-center gap-3 hover:border-healix-teal/40 hover:bg-teal-50/30 transition-all disabled:opacity-50"
+                            >
+                                <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05]" />
+                                SIGN UP WITH GOOGLE
+                            </button>
+                        </>
+                    )}
                 </form>
             </div>
 
