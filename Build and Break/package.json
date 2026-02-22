@@ -17,7 +17,8 @@
     "start:backend": "npm run start -w backend/server",
     "install-all": "npm install",
     "render-build": "npm run install-all && npm run build:client",
-    "render_build": "npm run render-build"
+    "render_build": "npm run render-build",
+    "render-build_": "npm run render-build"
   },
   "dependencies": {}
 }
