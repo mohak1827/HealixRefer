@@ -76,10 +76,16 @@ const LabDirectory = () => {
             // If lab provides at least one requested test
             if (providedTestsCount > 0) {
                 // Score metric: Lower is better. 
-                // A massive penalty if it doesn't provide all selected tests (-1000 per missing test).
-                // Add price and a small multiplier for distance.
-                const missingTestsPenalty = (searchedTests.length - providedTestsCount) * 10000;
-                const score = totalPrice + (lab.calculatedDistance * 10) + missingTestsPenalty;
+                // We penalize missing tests heavily.
+                // We balance Price (40%), Distance (20%), and Rating (40%).
+                const missingTestsPenalty = (searchedTests.length - providedTestsCount) * 50000;
+
+                // Weights and normalization
+                const priceScore = totalPrice * 0.4;
+                const distanceScore = (lab.calculatedDistance * 10) * 0.2;
+                const ratingBonus = (lab.rating * 100) * 0.4; // Subtracting bonus because lower is better
+
+                const score = priceScore + distanceScore + missingTestsPenalty - ratingBonus;
 
                 if (score < bestScore) {
                     bestScore = score;
@@ -177,8 +183,8 @@ const LabDirectory = () => {
                                 }}
                                 disabled={selectedTests.length === 0}
                                 className={`px-8 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 flex-shrink-0 md:w-auto w-full ${selectedTests.length > 0
-                                        ? 'bg-medical-dark text-white hover:bg-slate-800 shadow-md hover:shadow-xl hover:-translate-y-0.5'
-                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
+                                    ? 'bg-medical-dark text-white hover:bg-slate-800 shadow-md hover:shadow-xl hover:-translate-y-0.5'
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
                                     }`}
                             >
                                 <Brain size={18} />

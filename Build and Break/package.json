@@ -1,14 +1,14 @@
 {
-  "name": "medi-route-ai-root",
+  "name": "healix-refer-root",
   "version": "1.0.0",
-  "description": "MediRoute AI Root Orchestrator",
+  "private": true,
   "scripts": {
-    "dev:server": "cd server && npm run dev",
-    "dev:client": "cd client && npm run dev",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "install:all": "npm install && cd server && npm install && cd ../client && npm install"
+    "install-client": "cd client && npm install",
+    "install-server": "cd server && npm install",
+    "install-all": "npm install && npm run install-client && npm run install-server",
+    "build-client": "cd client && npm run build",
+    "start": "cd server && NODE_ENV=production node server.js",
+    "render-build": "npm run install-all && npm run build-client"
   },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
-  }
+  "dependencies": {}
 }
