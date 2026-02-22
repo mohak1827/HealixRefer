@@ -11,7 +11,8 @@
     "dev:server": "npm run dev -w server",
     "build:client": "npm run build -w client",
     "start": "npm run start -w server",
-    "install-all": "npm install"
+    "install-all": "npm install",
+    "render-build": "npm run install-all && npm run build:client"
   },
   "dependencies": {}
 }
