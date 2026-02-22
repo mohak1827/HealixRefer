@@ -3,14 +3,18 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "client",
-    "server"
+    "frontend/client",
+    "backend/server"
   ],
   "scripts": {
-    "dev:client": "npm run dev -w client",
-    "dev:server": "npm run dev -w server",
-    "build:client": "npm run build -w client",
-    "start": "npm run start -w server",
+    "dev:client": "npm run dev -w frontend/client",
+    "dev:server": "npm run dev -w backend/server",
+    "dev:frontend": "npm run dev -w frontend/client",
+    "dev:backend": "npm run dev -w backend/server",
+    "build:client": "npm run build -w frontend/client",
+    "build:frontend": "npm run build -w frontend/client",
+    "start": "npm run start -w backend/server",
+    "start:backend": "npm run start -w backend/server",
     "install-all": "npm install",
     "render-build": "npm run install-all && npm run build:client"
   },
