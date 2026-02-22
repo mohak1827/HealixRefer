@@ -10,10 +10,10 @@ Make sure all your changes are pushed to your GitHub repository.
 2.  Click **New +** and select **Web Service**.
 3.  Connect your GitHub repository.
 4.  Configure the following settings:
-    - **Name**: `healix-refer` (or any name you like)
+    - **Name**: `healix-refer`
     - **Region**: Select the one closest to you.
-    - **Branch**: `main` (or your default branch)
-    - **Root Directory**: Leave blank (we use the root `package.json`).
+    - **Branch**: `main`
+    - **Root Directory**: Leave blank (I have updated the main root `package.json` to handle this).
     - **Runtime**: `Node`
     - **Build Command**: `npm run render-build`
     - **Start Command**: `npm start`
